@@ -1,0 +1,326 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'newt34441@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Entity Validation Helpers
+    function isValidPaymentSettings(p) {
+      return p.keys().hasAll(['bkashActive', 'nagadActive']) &&
+        p.bkashActive is bool &&
+        p.nagadActive is bool &&
+        (!('bkashNumber' in p) || (p.bkashNumber is string && p.bkashNumber.size() <= 30)) &&
+        (!('bkashAccountType' in p) || p.bkashAccountType in ['personal', 'merchant']) &&
+        (!('bkashInstructions' in p) || (p.bkashInstructions is string && p.bkashInstructions.size() <= 2000)) &&
+        (!('nagadNumber' in p) || (p.nagadNumber is string && p.nagadNumber.size() <= 30)) &&
+        (!('nagadAccountType' in p) || p.nagadAccountType in ['personal', 'merchant']) &&
+        (!('nagadInstructions' in p) || (p.nagadInstructions is string && p.nagadInstructions.size() <= 2000));
+    }
+
+    function isValidDonationSubmission(s) {
+      return s.keys().hasAll(['referenceNo', 'donorName', 'donorPhone', 'amount', 'method', 'recipientNumber', 'transactionId', 'purpose', 'status']) &&
+        s.referenceNo is string && s.referenceNo.size() > 0 && s.referenceNo.size() <= 50 &&
+        s.donorName is string && s.donorName.size() > 0 && s.donorName.size() <= 100 &&
+        s.donorPhone is string && s.donorPhone.size() > 0 && s.donorPhone.size() <= 25 &&
+        s.amount is number && s.amount > 0 &&
+        s.method in ['bkash', 'nagad'] &&
+        s.recipientNumber is string && s.recipientNumber.size() > 0 && s.recipientNumber.size() <= 30 &&
+        s.transactionId is string && s.transactionId.size() > 0 && s.transactionId.size() <= 50 &&
+        s.purpose is string && s.purpose.size() > 0 && s.purpose.size() <= 300 &&
+        s.status in ['pending', 'approved', 'rejected'] &&
+        (!('note' in s) || (s.note is string && s.note.size() <= 500)) &&
+        (!('submittedAt' in s) || (s.submittedAt is string && s.submittedAt.size() <= 50)) &&
+        (!('reviewedAt' in s) || (s.reviewedAt is string && s.reviewedAt.size() <= 50)) &&
+        (!('reviewedBy' in s) || (s.reviewedBy is string && s.reviewedBy.size() <= 128)) &&
+        (!('rejectionReason' in s) || (s.rejectionReason is string && s.rejectionReason.size() <= 300)) &&
+        (!('linkedTransactionId' in s) || (s.linkedTransactionId is string && s.linkedTransactionId.size() <= 128)) &&
+        (!('linkedDonationId' in s) || (s.linkedDonationId is string && s.linkedDonationId.size() <= 128));
+    }
+
+    function isValidDonation(d) {
+      return d.keys().hasAll(['donorName', 'amount', 'date', 'purpose']) &&
+        d.donorName is string && d.donorName.size() > 0 && d.donorName.size() <= 100 &&
+        d.amount is number && d.amount > 0 &&
+        d.date is string && d.date.size() > 0 && d.date.size() <= 30 &&
+        d.purpose is string && d.purpose.size() > 0 && d.purpose.size() <= 300 &&
+        (!('receiptNo' in d) || (d.receiptNo is string && d.receiptNo.size() <= 50));
+    }
+
+    function isValidMember(m) {
+      return m.keys().hasAll(['name', 'memberId', 'designation', 'joinDate', 'status']) &&
+        m.name is string && m.name.size() > 0 && m.name.size() <= 100 &&
+        m.memberId is string && m.memberId.size() > 0 && m.memberId.size() <= 50 &&
+        m.designation is string && m.designation.size() > 0 && m.designation.size() <= 100 &&
+        m.joinDate is string && m.joinDate.size() > 0 && m.joinDate.size() <= 30 &&
+        m.status in ['active', 'inactive'] &&
+        (!('registrationNo' in m) || (m.registrationNo is string && m.registrationNo.size() <= 50)) &&
+        (!('fatherName' in m) || (m.fatherName is string && m.fatherName.size() <= 100)) &&
+        (!('motherName' in m) || (m.motherName is string && m.motherName.size() <= 100)) &&
+        (!('dateOfBirth' in m) || (m.dateOfBirth is string && m.dateOfBirth.size() <= 30)) &&
+        (!('bloodGroup' in m) || (m.bloodGroup is string && m.bloodGroup.size() <= 20)) &&
+        (!('occupation' in m) || (m.occupation is string && m.occupation.size() <= 100)) &&
+        (!('phone' in m) || (m.phone is string && m.phone.size() <= 30)) &&
+        (!('emergencyContact' in m) || (m.emergencyContact is string && m.emergencyContact.size() <= 30)) &&
+        (!('village' in m) || (m.village is string && m.village.size() <= 100)) &&
+        (!('wardNo' in m) || (m.wardNo is string && m.wardNo.size() <= 50)) &&
+        (!('union' in m) || (m.union is string && m.union.size() <= 100)) &&
+        (!('upazila' in m) || (m.upazila is string && m.upazila.size() <= 100)) &&
+        (!('district' in m) || (m.district is string && m.district.size() <= 100)) &&
+        (!('memberType' in m) || (m.memberType is string && m.memberType.size() <= 100)) &&
+        (!('subscriptionType' in m) || m.subscriptionType in ['monthly', 'yearly', 'none']) &&
+        (!('subscriptionAmount' in m) || (m.subscriptionAmount is number && m.subscriptionAmount >= 0)) &&
+        (!('photoUrl' in m) || (m.photoUrl is string && m.photoUrl.size() <= 1000000)) &&
+        (!('updatedAt' in m) || (m.updatedAt is string && m.updatedAt.size() <= 50)) &&
+        (!('updatedBy' in m) || (m.updatedBy is string && m.updatedBy.size() <= 128));
+    }
+
+    function isValidMemberFeePayment(p) {
+      return p.keys().hasAll(['date', 'amount', 'paymentMethod']) &&
+        p.date is string && p.date.size() > 0 && p.date.size() <= 30 &&
+        p.amount is number && p.amount > 0 &&
+        p.paymentMethod is string && p.paymentMethod.size() > 0 && p.paymentMethod.size() <= 50 &&
+        (!('receiptNo' in p) || (p.receiptNo is string && p.receiptNo.size() <= 50)) &&
+        (!('recordedBy' in p) || (p.recordedBy is string && p.recordedBy.size() <= 128)) &&
+        (!('remarks' in p) || (p.remarks is string && p.remarks.size() <= 500)) &&
+        (!('linkedTransactionId' in p) || (p.linkedTransactionId is string && p.linkedTransactionId.size() <= 128)) &&
+        (!('memberDocId' in p) || (p.memberDocId is string && p.memberDocId.size() <= 128)) &&
+        (!('createdAt' in p) || (p.createdAt is string && p.createdAt.size() <= 50));
+    }
+
+    function isValidTransaction(t) {
+      return t.keys().hasAll(['type', 'category', 'amount', 'date', 'description']) &&
+        t.type in ['income', 'expense'] &&
+        t.category is string && t.category.size() > 0 && t.category.size() <= 100 &&
+        t.amount is number && t.amount > 0 &&
+        t.date is string && t.date.size() > 0 && t.date.size() <= 30 &&
+        t.description is string && t.description.size() > 0 && t.description.size() <= 500 &&
+        (!('voucherNo' in t) || (t.voucherNo is string && t.voucherNo.size() <= 50)) &&
+        (!('sourceSubmissionId' in t) || (t.sourceSubmissionId is string && t.sourceSubmissionId.size() <= 128));
+    }
+
+    function isValidActivity(a) {
+      return a.keys().hasAll(['title', 'date', 'location', 'description', 'status', 'isPublished']) &&
+        a.title is string && a.title.size() > 0 && a.title.size() <= 200 &&
+        a.date is string && a.date.size() > 0 && a.date.size() <= 50 &&
+        a.location is string && a.location.size() > 0 && a.location.size() <= 200 &&
+        a.description is string && a.description.size() > 0 && a.description.size() <= 5000 &&
+        a.status in ['upcoming', 'ongoing', 'completed'] &&
+        a.isPublished is bool &&
+        (!('photoUrl' in a) || (a.photoUrl is string && a.photoUrl.size() <= 1000000));
+    }
+
+    function isValidPolicy(p) {
+      return p.keys().hasAll(['title', 'content', 'isPublished']) &&
+        p.title is string && p.title.size() > 0 && p.title.size() <= 200 &&
+        p.content is string && p.content.size() > 0 && p.content.size() <= 10000 &&
+        p.isPublished is bool &&
+        (!('category' in p) || (p.category is string && p.category.size() <= 100)) &&
+        (!('orderNumber' in p) || (p.orderNumber is number));
+    }
+
+    function isValidFoundationInfo(f) {
+      return f.keys().hasAll(['name', 'address', 'establishedDate']) &&
+        f.name is string && f.name.size() > 0 && f.name.size() <= 200 &&
+        f.address is string && f.address.size() > 0 && f.address.size() <= 300 &&
+        f.establishedDate is string && f.establishedDate.size() > 0 && f.establishedDate.size() <= 50 &&
+        (!('motto' in f) || (f.motto is string && f.motto.size() <= 300)) &&
+        (!('introduction' in f) || (f.introduction is string && f.introduction.size() <= 5000)) &&
+        (!('mission' in f) || (f.mission is string && f.mission.size() <= 3000)) &&
+        (!('vision' in f) || (f.vision is string && f.vision.size() <= 3000)) &&
+        (!('futurePlans' in f) || (f.futurePlans is string && f.futurePlans.size() <= 3000)) &&
+        (!('logoUrl' in f) || (f.logoUrl is string && f.logoUrl.size() <= 1000000)) &&
+        (!('contactEmail' in f) || (f.contactEmail is string && f.contactEmail.size() <= 100)) &&
+        (!('contactPhone' in f) || (f.contactPhone is string && f.contactPhone.size() <= 50));
+    }
+
+    function isValidAdvisor(ad) {
+      return ad.keys().hasAll(['name', 'designation']) &&
+        ad.name is string && ad.name.size() > 0 && ad.name.size() <= 100 &&
+        ad.designation is string && ad.designation.size() > 0 && ad.designation.size() <= 150 &&
+        (!('organization' in ad) || (ad.organization is string && ad.organization.size() <= 150)) &&
+        (!('photoUrl' in ad) || (ad.photoUrl is string && ad.photoUrl.size() <= 1000000)) &&
+        (!('bio' in ad) || (ad.bio is string && ad.bio.size() <= 1000)) &&
+        (!('orderNumber' in ad) || (ad.orderNumber is number));
+    }
+
+    function isValidExecutive(ex) {
+      return ex.keys().hasAll(['name', 'designation']) &&
+        ex.name is string && ex.name.size() > 0 && ex.name.size() <= 100 &&
+        ex.designation is string && ex.designation.size() > 0 && ex.designation.size() <= 150 &&
+        (!('role' in ex) || (ex.role is string && ex.role.size() <= 100)) &&
+        (!('photoUrl' in ex) || (ex.photoUrl is string && ex.photoUrl.size() <= 1000000)) &&
+        (!('bio' in ex) || (ex.bio is string && ex.bio.size() <= 1000)) &&
+        (!('orderNumber' in ex) || (ex.orderNumber is number));
+    }
+
+    function isValidBloodDonor(b) {
+      return b.keys().hasAll(['name', 'bloodGroup', 'area', 'hasConsent']) &&
+        b.name is string && b.name.size() > 0 && b.name.size() <= 100 &&
+        b.bloodGroup in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] &&
+        b.area is string && b.area.size() > 0 && b.area.size() <= 150 &&
+        b.hasConsent is bool &&
+        (!('isAvailable' in b) || (b.isAvailable is bool)) &&
+        (!('lastDonationDate' in b) || (b.lastDonationDate is string && b.lastDonationDate.size() <= 30)) &&
+        (!('contactNumber' in b) || (b.contactNumber is string && b.contactNumber.size() <= 30));
+    }
+
+    function isValidAdminDoc(adm) {
+      return adm.keys().hasAll(['email', 'role']) &&
+        adm.email is string && adm.email.size() > 0 && adm.email.size() <= 150 &&
+        adm.role in ['admin', 'superadmin'];
+    }
+
+    // Match rules for Collections
+
+    // 0. Payment Settings: Public read, Admin write
+    match /paymentSettings/{docId} {
+      allow get: if isValidId(docId);
+      allow list: if true;
+      allow create, update: if isValidId(docId) && isAdmin() && isValidPaymentSettings(incoming());
+      allow delete: if isValidId(docId) && isAdmin();
+    }
+
+    // 0.1 Donation Submissions: Public create with pending, Admin full manage
+    match /donationSubmissions/{submissionId} {
+      allow get: if isValidId(submissionId);
+      allow list: if isAdmin();
+      allow create: if isValidId(submissionId) && isValidDonationSubmission(incoming()) && incoming().status == 'pending';
+      allow update: if isValidId(submissionId) && isAdmin() && isValidDonationSubmission(incoming());
+      allow delete: if isValidId(submissionId) && isAdmin();
+    }
+
+    // 0.2 Approved Transaction IDs (Anti-duplicate lock index)
+    match /approvedTrxIds/{trxDocId} {
+      allow get, list: if isAdmin();
+      allow create, update, delete: if isValidId(trxDocId) && isAdmin();
+    }
+
+    // 1. Donations: Public read, Admin write
+    match /donations/{donationId} {
+      allow get: if isValidId(donationId);
+      allow list: if true;
+      allow create: if isValidId(donationId) && isAdmin() && isValidDonation(incoming());
+      allow update: if isValidId(donationId) && isAdmin() && isValidDonation(incoming());
+      allow delete: if isValidId(donationId) && isAdmin();
+    }
+
+    // 2. Members: Public read, Admin write
+    match /members/{memberId} {
+      allow get: if isValidId(memberId);
+      allow list: if true;
+      allow create: if isValidId(memberId) && isAdmin() && isValidMember(incoming());
+      allow update: if isValidId(memberId) && isAdmin() && isValidMember(incoming());
+      allow delete: if isValidId(memberId) && isAdmin();
+
+      // Subcollection: Member Fee Payments (Admin only read & write to protect financial privacy)
+      match /feePayments/{paymentId} {
+        allow get, list: if isValidId(paymentId) && isAdmin();
+        allow create, update: if isValidId(paymentId) && isAdmin() && isValidMemberFeePayment(incoming());
+        allow delete: if isValidId(paymentId) && isAdmin();
+      }
+    }
+
+    // 3. Transactions: Public read, Admin write
+    match /transactions/{transactionId} {
+      allow get: if isValidId(transactionId);
+      allow list: if true;
+      allow create: if isValidId(transactionId) && isAdmin() && isValidTransaction(incoming());
+      allow update: if isValidId(transactionId) && isAdmin() && isValidTransaction(incoming());
+      allow delete: if isValidId(transactionId) && isAdmin();
+    }
+
+    // 4. Activities: Public read if published (or admin), Admin write
+    match /activities/{activityId} {
+      allow get: if isValidId(activityId) && (resource.data.isPublished == true || isAdmin());
+      allow list: if resource.data.isPublished == true || isAdmin();
+      allow create: if isValidId(activityId) && isAdmin() && isValidActivity(incoming());
+      allow update: if isValidId(activityId) && isAdmin() && isValidActivity(incoming());
+      allow delete: if isValidId(activityId) && isAdmin();
+    }
+
+    // 5. Policies: Public read if published (or admin), Admin write
+    match /policies/{policyId} {
+      allow get: if isValidId(policyId) && (resource.data.isPublished == true || isAdmin());
+      allow list: if resource.data.isPublished == true || isAdmin();
+      allow create: if isValidId(policyId) && isAdmin() && isValidPolicy(incoming());
+      allow update: if isValidId(policyId) && isAdmin() && isValidPolicy(incoming());
+      allow delete: if isValidId(policyId) && isAdmin();
+    }
+
+    // 6. FoundationInfo: Public read, Admin write
+    match /foundationInfo/{docId} {
+      allow get: if isValidId(docId);
+      allow list: if true;
+      allow create: if isValidId(docId) && isAdmin() && isValidFoundationInfo(incoming());
+      allow update: if isValidId(docId) && isAdmin() && isValidFoundationInfo(incoming());
+      allow delete: if isValidId(docId) && isAdmin();
+    }
+
+    // 7. Advisors: Public read, Admin write
+    match /advisors/{advisorId} {
+      allow get: if isValidId(advisorId);
+      allow list: if true;
+      allow create: if isValidId(advisorId) && isAdmin() && isValidAdvisor(incoming());
+      allow update: if isValidId(advisorId) && isAdmin() && isValidAdvisor(incoming());
+      allow delete: if isValidId(advisorId) && isAdmin();
+    }
+
+    // 8. Executives: Public read, Admin write
+    match /executives/{executiveId} {
+      allow get: if isValidId(executiveId);
+      allow list: if true;
+      allow create: if isValidId(executiveId) && isAdmin() && isValidExecutive(incoming());
+      allow update: if isValidId(executiveId) && isAdmin() && isValidExecutive(incoming());
+      allow delete: if isValidId(executiveId) && isAdmin();
+    }
+
+    // 9. Blood Donors: Public read with consent only (or admin), Admin write
+    match /bloodDonors/{donorId} {
+      allow get: if isValidId(donorId) && (resource.data.hasConsent == true || isAdmin());
+      allow list: if resource.data.hasConsent == true || isAdmin();
+      allow create: if isValidId(donorId) && isAdmin() && isValidBloodDonor(incoming());
+      allow update: if isValidId(donorId) && isAdmin() && isValidBloodDonor(incoming());
+      allow delete: if isValidId(donorId) && isAdmin();
+    }
+
+    // 10. Admins: Admin only read and write
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(adminUid) && isAdmin() && isValidAdminDoc(incoming());
+      allow update: if isValidId(adminUid) && isAdmin() && isValidAdminDoc(incoming());
+      allow delete: if isValidId(adminUid) && isAdmin();
+    }
+  }
+}

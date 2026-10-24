@@ -1,0 +1,306 @@
+{
+  "entities": {
+    "Donation": {
+      "title": "Donation",
+      "description": "Donation record received by Kodalpur Humanitarian Foundation",
+      "type": "object",
+      "properties": {
+        "donorName": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 30 },
+        "purpose": { "type": "string", "maxLength": 300 },
+        "receiptNo": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["donorName", "amount", "date", "purpose"]
+    },
+    "PaymentSettings": {
+      "title": "PaymentSettings",
+      "description": "Manual payment numbers and instructions for bKash and Nagad",
+      "type": "object",
+      "properties": {
+        "bkashNumber": { "type": "string", "maxLength": 30 },
+        "bkashAccountType": { "type": "string", "enum": ["personal", "merchant"] },
+        "bkashActive": { "type": "boolean" },
+        "bkashInstructions": { "type": "string", "maxLength": 2000 },
+        "nagadNumber": { "type": "string", "maxLength": 30 },
+        "nagadAccountType": { "type": "string", "enum": ["personal", "merchant"] },
+        "nagadActive": { "type": "boolean" },
+        "nagadInstructions": { "type": "string", "maxLength": 2000 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["bkashActive", "nagadActive"]
+    },
+    "DonationSubmission": {
+      "title": "DonationSubmission",
+      "description": "User submitted manual donation payment intent awaiting admin verification",
+      "type": "object",
+      "properties": {
+        "referenceNo": { "type": "string", "maxLength": 50 },
+        "donorName": { "type": "string", "maxLength": 100 },
+        "donorPhone": { "type": "string", "maxLength": 25 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["bkash", "nagad"] },
+        "recipientNumber": { "type": "string", "maxLength": 30 },
+        "transactionId": { "type": "string", "maxLength": 50 },
+        "purpose": { "type": "string", "maxLength": 300 },
+        "note": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "submittedAt": { "type": "string", "maxLength": 50 },
+        "reviewedAt": { "type": "string", "maxLength": 50 },
+        "reviewedBy": { "type": "string", "maxLength": 128 },
+        "rejectionReason": { "type": "string", "maxLength": 300 },
+        "linkedTransactionId": { "type": "string", "maxLength": 128 },
+        "linkedDonationId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["referenceNo", "donorName", "donorPhone", "amount", "method", "recipientNumber", "transactionId", "purpose", "status"]
+    },
+    "ApprovedTrxId": {
+      "title": "ApprovedTrxId",
+      "description": "Unique index record of approved transaction IDs to prevent double claiming",
+      "type": "object",
+      "properties": {
+        "trxId": { "type": "string", "maxLength": 50 },
+        "method": { "type": "string", "enum": ["bkash", "nagad"] },
+        "submissionId": { "type": "string", "maxLength": 128 },
+        "referenceNo": { "type": "string", "maxLength": 50 },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "approvedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["trxId", "method", "submissionId", "referenceNo"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "Registered member of Kodalpur Humanitarian Foundation with complete personal, address and subscription fee data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "memberId": { "type": "string", "maxLength": 50 },
+        "registrationNo": { "type": "string", "maxLength": 50 },
+        "fatherName": { "type": "string", "maxLength": 100 },
+        "motherName": { "type": "string", "maxLength": 100 },
+        "dateOfBirth": { "type": "string", "maxLength": 30 },
+        "bloodGroup": { "type": "string", "maxLength": 20 },
+        "occupation": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "emergencyContact": { "type": "string", "maxLength": 30 },
+        "village": { "type": "string", "maxLength": 100 },
+        "wardNo": { "type": "string", "maxLength": 50 },
+        "union": { "type": "string", "maxLength": 100 },
+        "upazila": { "type": "string", "maxLength": 100 },
+        "district": { "type": "string", "maxLength": 100 },
+        "designation": { "type": "string", "maxLength": 100 },
+        "memberType": { "type": "string", "maxLength": 100 },
+        "joinDate": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "subscriptionType": { "type": "string", "enum": ["monthly", "yearly", "none"] },
+        "subscriptionAmount": { "type": "number" },
+        "photoUrl": { "type": "string", "maxLength": 1000000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["name", "memberId", "designation", "joinDate", "status"]
+    },
+    "MemberFeePayment": {
+      "title": "MemberFeePayment",
+      "description": "Subscription fee payment ledger entry for a member",
+      "type": "object",
+      "properties": {
+        "memberDocId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 30 },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "receiptNo": { "type": "string", "maxLength": 50 },
+        "recordedBy": { "type": "string", "maxLength": 128 },
+        "remarks": { "type": "string", "maxLength": 500 },
+        "linkedTransactionId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "amount", "paymentMethod"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Income or expense ledger record",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 30 },
+        "description": { "type": "string", "maxLength": 500 },
+        "voucherNo": { "type": "string", "maxLength": 50 },
+        "sourceSubmissionId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["type", "category", "amount", "date", "description"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Humanitarian activity, relief effort or program",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "date": { "type": "string", "maxLength": 50 },
+        "location": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "photoUrl": { "type": "string", "maxLength": 1000000 },
+        "status": { "type": "string", "enum": ["upcoming", "ongoing", "completed"] },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "date", "location", "description", "status", "isPublished"]
+    },
+    "Policy": {
+      "title": "Policy",
+      "description": "Institutional policy and constitution guidelines",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 100 },
+        "content": { "type": "string", "maxLength": 10000 },
+        "orderNumber": { "type": "number" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "isPublished"]
+    },
+    "FoundationInfo": {
+      "title": "FoundationInfo",
+      "description": "General profile, motto, mission, vision, address and logo",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 200 },
+        "address": { "type": "string", "maxLength": 300 },
+        "establishedDate": { "type": "string", "maxLength": 50 },
+        "motto": { "type": "string", "maxLength": 300 },
+        "introduction": { "type": "string", "maxLength": 5000 },
+        "mission": { "type": "string", "maxLength": 3000 },
+        "vision": { "type": "string", "maxLength": 3000 },
+        "futurePlans": { "type": "string", "maxLength": 3000 },
+        "logoUrl": { "type": "string", "maxLength": 1000000 },
+        "contactEmail": { "type": "string", "maxLength": 100 },
+        "contactPhone": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "address", "establishedDate"]
+    },
+    "Advisor": {
+      "title": "Advisor",
+      "description": "Advisory board member profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "designation": { "type": "string", "maxLength": 150 },
+        "organization": { "type": "string", "maxLength": 150 },
+        "photoUrl": { "type": "string", "maxLength": 1000000 },
+        "bio": { "type": "string", "maxLength": 1000 },
+        "orderNumber": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "designation"]
+    },
+    "Executive": {
+      "title": "Executive",
+      "description": "Executive committee member / founder profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "designation": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "maxLength": 100 },
+        "photoUrl": { "type": "string", "maxLength": 1000000 },
+        "bio": { "type": "string", "maxLength": 1000 },
+        "orderNumber": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "designation"]
+    },
+    "BloodDonor": {
+      "title": "BloodDonor",
+      "description": "Registered voluntary blood donor",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "bloodGroup": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+        "area": { "type": "string", "maxLength": 150 },
+        "lastDonationDate": { "type": "string", "maxLength": 30 },
+        "contactNumber": { "type": "string", "maxLength": 30 },
+        "hasConsent": { "type": "boolean" },
+        "isAvailable": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "bloodGroup", "area", "hasConsent"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized administrator user profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["admin", "superadmin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/paymentSettings/{docId}": {
+      "schema": "PaymentSettings",
+      "description": "Admin configured payment accounts for bKash and Nagad"
+    },
+    "/donationSubmissions/{submissionId}": {
+      "schema": "DonationSubmission",
+      "description": "Manual donation submissions pending verification"
+    },
+    "/approvedTrxIds/{trxDocId}": {
+      "schema": "ApprovedTrxId",
+      "description": "Unique index of approved transaction IDs"
+    },
+    "/donations/{donationId}": {
+      "schema": "Donation",
+      "description": "Approved and recorded donations"
+    },
+    "/members/{memberId}": {
+      "schema": "Member",
+      "description": "Foundation members"
+    },
+    "/members/{memberId}/feePayments/{paymentId}": {
+      "schema": "MemberFeePayment",
+      "description": "Subscription fee payment ledger records for a member"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Income and expense transactions ledger"
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Humanitarian relief activities and events"
+    },
+    "/policies/{policyId}": {
+      "schema": "Policy",
+      "description": "Official rules, constitution and policies"
+    },
+    "/foundationInfo/{docId}": {
+      "schema": "FoundationInfo",
+      "description": "Core foundation profile, mission, vision, address, logo"
+    },
+    "/advisors/{advisorId}": {
+      "schema": "Advisor",
+      "description": "Advisors of the foundation"
+    },
+    "/executives/{executiveId}": {
+      "schema": "Executive",
+      "description": "Founder and executive committee officers"
+    },
+    "/bloodDonors/{donorId}": {
+      "schema": "BloodDonor",
+      "description": "Voluntary blood donors list"
+    },
+    "/admins/{adminUid}": {
+      "schema": "Admin",
+      "description": "System admin access permissions"
+    }
+  }
+}
