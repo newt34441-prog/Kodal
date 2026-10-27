@@ -77,17 +77,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate, info }) => {
       {/* Main Profile Card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 mb-8 shadow-xs">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 mb-6">
-          {info?.logoUrl ? (
-            <img
-              src={info.logoUrl}
-              alt="কোদালপুর মানবিক ফাউন্ডেশন লোগো"
-              className="w-20 h-20 rounded-2xl object-contain border border-slate-200 p-1 bg-white shrink-0 shadow-xs"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-2xl bg-blue-950 text-white flex items-center justify-center font-bold text-2xl shrink-0 shadow-xs">
-              কো
-            </div>
-          )}
+          <img
+            src={info?.profilePhotoUrl || info?.logoUrl || '/assets/images/foundation_logo.png'}
+            alt="কোদালপুর মানবিক ফাউন্ডেশন লোগো"
+            className="w-20 h-20 rounded-2xl object-contain border border-slate-200 p-1 bg-white shrink-0 shadow-xs"
+          />
 
           <div className="text-center sm:text-left">
             <h3 className="text-2xl font-bold text-blue-950">

@@ -10,6 +10,7 @@ export interface Donation {
 }
 
 export interface PaymentSettings {
+  id?: string;
   bkashNumber?: string;
   bkashAccountType?: 'personal' | 'merchant';
   bkashActive: boolean;
@@ -42,17 +43,17 @@ export interface DonationSubmission {
 }
 
 export interface ApprovedTrxId {
+  id?: string;
   trxId: string;
   method: 'bkash' | 'nagad';
   submissionId: string;
   referenceNo: string;
-  approvedAt: string;
-  approvedBy: string;
+  approvedAt?: string;
+  approvedBy?: string;
 }
 
 export interface Member {
   id: string;
-  // Personal Info
   name: string;
   memberId: string;
   registrationNo?: string;
@@ -63,25 +64,20 @@ export interface Member {
   occupation?: string;
   phone?: string;
   emergencyContact?: string;
-  photoUrl?: string;
-
-  // Address
   village?: string;
+  area?: string;
   wardNo?: string;
   union?: string;
   upazila?: string;
   district?: string;
-
-  // Foundation Info
   designation: string;
-  memberType?: string; // e.g. সাধারণ সদস্য, আজীবন সদস্য, দাতা সদস্য, প্রতিষ্ঠাতা সদস্য
-  category?: string; // e.g. উপদেষ্টা পরিষদ, কার্যনির্বাহী পরিষদ, সাধারণ সদস্য, সম্মানিত সদস্য, দাতা সদস্য
-  area?: string;
+  memberType?: string;
+  category?: string;
   joinDate: string;
   status: 'active' | 'inactive';
   subscriptionType?: 'monthly' | 'yearly' | 'none';
   subscriptionAmount?: number;
-
+  photoUrl?: string;
   createdAt?: string;
   updatedAt?: string;
   updatedBy?: string;
@@ -89,10 +85,10 @@ export interface Member {
 
 export interface MemberFeePayment {
   id: string;
-  memberDocId: string;
+  memberDocId?: string;
   date: string;
   amount: number;
-  paymentMethod: string; // নগদ / বিকাশ / ব্যাংক / ক্যাশ
+  paymentMethod: string;
   receiptNo?: string;
   recordedBy?: string;
   remarks?: string;
@@ -148,6 +144,7 @@ export interface Policy {
 }
 
 export interface FoundationInfo {
+  id?: string;
   name: string;
   address: string;
   establishedDate: string;
@@ -157,6 +154,9 @@ export interface FoundationInfo {
   vision?: string;
   futurePlans?: string;
   logoUrl?: string;
+  profilePhotoUrl?: string;
+  photoUpdatedAt?: string;
+  photoUpdatedBy?: string;
   contactEmail?: string;
   contactPhone?: string;
   updatedAt?: string;
@@ -196,8 +196,8 @@ export interface BloodDonor {
   createdAt?: string;
 }
 
-export interface AdminUser {
-  uid: string;
+export interface Admin {
+  id: string;
   email: string;
   role: 'admin' | 'superadmin';
   createdAt?: string;

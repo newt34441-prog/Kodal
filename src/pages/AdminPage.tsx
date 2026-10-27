@@ -37,6 +37,7 @@ import {
   Copy,
   PlusCircle,
   RefreshCw,
+  Camera,
 } from 'lucide-react';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
@@ -57,6 +58,7 @@ import {
 import { formatTaka, formatBengaliDate, toBengaliNumber } from '../utils/formatters';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
+import { ProfilePhotoManager } from '../components/admin/ProfilePhotoManager';
 import {
   approveDonationSubmission,
   rejectDonationSubmission,
@@ -70,6 +72,7 @@ interface AdminPageProps {
 
 type TabType =
   | 'submissions'
+  | 'profilePhoto'
   | 'paymentSettings'
   | 'donations'
   | 'members'
@@ -935,18 +938,31 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Admin Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-slate-200 gap-4">
-        <div>
-          <button
-            onClick={() => onNavigate('/')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-950 mb-1.5 cursor-pointer"
+        <div className="flex items-center gap-3.5">
+          <div
+            onClick={() => { setActiveTab('profilePhoto'); setEditingId(null); }}
+            className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white border-2 border-slate-200 shadow-sm p-1 flex items-center justify-center overflow-hidden cursor-pointer hover:border-blue-900 group transition-all shrink-0"
+            title="প্রোফাইল ছবি পরিবর্তন করতে ক্লিক করুন"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>মূল ওয়েবসাইটে দেখুন</span>
-          </button>
-          <h2 className="text-2xl font-black text-blue-950">ফাউন্ডেশন অ্যাডমিন ড্যাশবোর্ড</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            লগইনকৃত অ্যাডমিন: <span className="font-medium text-emerald-700">{user.email}</span>
-          </p>
+            <img
+              src={info?.profilePhotoUrl || info?.logoUrl || '/assets/images/foundation_logo.png'}
+              alt="ফাউন্ডেশন লোগো"
+              className="w-full h-full object-contain rounded-xl group-hover:scale-105 transition-transform"
+            />
+          </div>
+          <div>
+            <button
+              onClick={() => onNavigate('/')}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-950 mb-1 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>মূল ওয়েবসাইটে দেখুন</span>
+            </button>
+            <h2 className="text-xl sm:text-2xl font-black text-blue-950">ফাউন্ডেশন অ্যাডমিন ড্যাশবোর্ড</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              লগইনকৃত অ্যাডমিন: <span className="font-medium text-emerald-700">{user.email}</span>
+            </p>
+          </div>
         </div>
 
         <button
@@ -991,6 +1007,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
               {toBengaliNumber(pendingCount)}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('profilePhoto'); setEditingId(null); }}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTab === 'profilePhoto' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Camera className="w-4 h-4 text-blue-900" />
+          <span>প্রোফাইল ছবি পরিবর্তন</span>
         </button>
 
         <button
@@ -1092,6 +1118,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
           <span>অ্যাডমিন অনুমতি</span>
         </button>
       </div>
+
+      {/* ==================== TAB: PROFILE PHOTO MANAGEMENT ==================== */}
+      {activeTab === 'profilePhoto' && (
+        <ProfilePhotoManager
+          currentInfo={info || null}
+          adminEmail={user.email}
+          onSuccess={() => {
+            showFeedback('success', 'ফাউন্ডেশনের প্রোফাইল ছবি ও লোগো সফলভাবে পরিবর্তন ও হালনাগাদ করা হয়েছে।');
+          }}
+        />
+      )}
 
       {/* ==================== TAB: SUBMISSIONS VERIFICATION ==================== */}
       {activeTab === 'submissions' && (

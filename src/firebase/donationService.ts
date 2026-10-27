@@ -60,6 +60,7 @@ export async function submitManualDonation(
     return { id: submissionId, referenceNo };
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, `donationSubmissions/${submissionId}`);
+    throw error;
   }
 }
 

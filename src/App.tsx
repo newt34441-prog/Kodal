@@ -72,7 +72,7 @@ function MainApp() {
     <div className="min-h-screen flex flex-col bg-[#F4F8FC] text-slate-900 selection:bg-[#0B376B] selection:text-white relative">
       <Header currentPath={currentPath} onNavigate={navigate} info={foundationInfo} />
       <main className="flex-1">{renderCurrentPage()}</main>
-      <Footer onNavigate={navigate} />
+      <Footer onNavigate={navigate} info={foundationInfo} />
 
       {/* Auto-update confirmation toast */}
       {updateNotification && (

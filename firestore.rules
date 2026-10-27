@@ -161,6 +161,10 @@ service cloud.firestore {
         (!('vision' in f) || (f.vision is string && f.vision.size() <= 3000)) &&
         (!('futurePlans' in f) || (f.futurePlans is string && f.futurePlans.size() <= 3000)) &&
         (!('logoUrl' in f) || (f.logoUrl is string && f.logoUrl.size() <= 1000000)) &&
+        (!('profilePhotoUrl' in f) || (f.profilePhotoUrl is string && f.profilePhotoUrl.size() <= 1000000)) &&
+        (!('photoUpdatedAt' in f) || (f.photoUpdatedAt is string && f.photoUpdatedAt.size() <= 50)) &&
+        (!('photoUpdatedBy' in f) || (f.photoUpdatedBy is string && f.photoUpdatedBy.size() <= 128)) &&
+        (!('updatedAt' in f) || (f.updatedAt is string && f.updatedAt.size() <= 50)) &&
         (!('contactEmail' in f) || (f.contactEmail is string && f.contactEmail.size() <= 100)) &&
         (!('contactPhone' in f) || (f.contactPhone is string && f.contactPhone.size() <= 50));
     }

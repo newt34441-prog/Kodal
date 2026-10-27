@@ -114,11 +114,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info }) => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Content Column */}
             <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-left">
-              {/* Green Kicker / Slogan */}
-              <div className="inline-flex items-center gap-2 text-[#078747] font-semibold text-sm sm:text-base tracking-wide">
-                <span className="w-5 sm:w-8 h-[2px] bg-[#078747]" />
-                <span>মানবতার টানে, সমাজের কল্যাণে</span>
-                <span className="w-5 sm:w-8 h-[2px] bg-[#078747]" />
+              {/* Foundation Profile Emblem & Slogan */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 border border-slate-200/90 shadow-2xs shrink-0 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={info?.profilePhotoUrl || info?.logoUrl || '/assets/images/foundation_logo.png'}
+                    alt="কোদালপুর মানবিক ফাউন্ডেশন প্রোফাইল"
+                    className="w-full h-full object-contain rounded-xl"
+                  />
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-2 text-[#078747] font-semibold text-xs sm:text-sm tracking-wide">
+                    <span className="w-3.5 h-[2px] bg-[#078747]" />
+                    <span>মানবতার টানে, সমাজের কল্যাণে</span>
+                    <span className="w-3.5 h-[2px] bg-[#078747]" />
+                  </div>
+                  <div className="text-2xs text-slate-500 font-medium">নিবন্ধিত মানবিক ও সামাজিক সংস্থা</div>
+                </div>
               </div>
 
               {/* Bold Dark Navy Headline */}

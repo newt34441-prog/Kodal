@@ -182,6 +182,9 @@
         "vision": { "type": "string", "maxLength": 3000 },
         "futurePlans": { "type": "string", "maxLength": 3000 },
         "logoUrl": { "type": "string", "maxLength": 1000000 },
+        "profilePhotoUrl": { "type": "string", "maxLength": 1000000 },
+        "photoUpdatedAt": { "type": "string", "maxLength": 50 },
+        "photoUpdatedBy": { "type": "string", "maxLength": 128 },
         "contactEmail": { "type": "string", "maxLength": 100 },
         "contactPhone": { "type": "string", "maxLength": 50 },
         "updatedAt": { "type": "string", "format": "date-time" }

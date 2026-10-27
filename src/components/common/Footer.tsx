@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Lock, MapPin, Smartphone, Share2 } from 'lucide-react';
 import { AppDownloadModal } from './AppDownloadModal';
+import { FoundationInfo } from '../../types';
 
 interface FooterProps {
   onNavigate: (path: string) => void;
+  info?: FoundationInfo | null;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, info }) => {
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   return (
@@ -18,7 +20,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <div className="flex items-center gap-3.5 sm:gap-4">
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white p-1 shrink-0 shadow-sm flex items-center justify-center overflow-hidden">
                 <img
-                  src="/assets/images/foundation_logo.png"
+                  src={info?.profilePhotoUrl || info?.logoUrl || '/assets/images/foundation_logo.png'}
                   alt="কোদালপুর মানবিক ফাউন্ডেশন লোগো"
                   className="w-full h-full object-contain rounded-full"
                 />

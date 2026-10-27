@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPath, onNavigate, info })
             {/* Authentic Circular Foundation Logo */}
             <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full p-0.5 bg-white border border-slate-200/90 shadow-2xs shrink-0 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
               <img
-                src={info?.logoUrl || '/assets/images/foundation_logo.png'}
+                src={info?.profilePhotoUrl || info?.logoUrl || '/assets/images/foundation_logo.png'}
                 alt="কোদালপুর মানবিক ফাউন্ডেশন লোগো"
                 className="w-full h-full object-contain rounded-full"
                 onError={(e) => {
