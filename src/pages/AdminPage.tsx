@@ -147,6 +147,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
     memberId: '',
     registrationNo: '',
     designation: '',
+    category: 'সাধারণ সদস্য',
     memberType: 'সাধারণ সদস্য',
     joinDate: new Date().toISOString().split('T')[0],
     status: 'active' as 'active' | 'inactive',
@@ -494,6 +495,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
       memberId: '',
       registrationNo: '',
       designation: '',
+      category: 'সাধারণ সদস্য',
       memberType: 'সাধারণ সদস্য',
       joinDate: new Date().toISOString().split('T')[0],
       status: 'active',
@@ -522,7 +524,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
       memberId: m.memberId || '',
       registrationNo: m.registrationNo || '',
       designation: m.designation || '',
-      memberType: m.memberType || 'সাধারণ সদস্য',
+      category: m.category || m.memberType || 'সাধারণ সদস্য',
+      memberType: m.memberType || m.category || 'সাধারণ সদস্য',
       joinDate: m.joinDate || new Date().toISOString().split('T')[0],
       status: m.status || 'active',
       subscriptionType: m.subscriptionType || 'monthly',
@@ -547,10 +550,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
   const handleMemberSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const selectedCat = memberForm.category || memberForm.memberType || 'সাধারণ সদস্য';
       const data: Record<string, any> = {
         name: memberForm.name.trim(),
         memberId: memberForm.memberId.trim(),
         designation: memberForm.designation.trim(),
+        category: selectedCat,
+        memberType: memberForm.memberType.trim() || selectedCat,
         joinDate: memberForm.joinDate,
         status: memberForm.status,
         updatedAt: new Date().toISOString(),
@@ -2021,17 +2027,21 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">সদস্যের ধরন</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        সদস্য ক্যাটাগরি (পরিষদ / বিভাগ) *
+                      </label>
                       <select
-                        value={memberForm.memberType}
-                        onChange={(e) => setMemberForm({ ...memberForm, memberType: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-900"
+                        value={memberForm.category || memberForm.memberType}
+                        onChange={(e) => setMemberForm({ ...memberForm, category: e.target.value, memberType: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-900 bg-white"
                       >
+                        <option value="উপদেষ্টা পরিষদ">উপদেষ্টা পরিষদ</option>
+                        <option value="কার্যনির্বাহী পরিষদ">কার্যনির্বাহী পরিষদ</option>
                         <option value="সাধারণ সদস্য">সাধারণ সদস্য</option>
-                        <option value="আজীবন সদস্য">আজীবন সদস্য</option>
+                        <option value="সম্মানিত সদস্য">সম্মানিত সদস্য</option>
                         <option value="দাতা সদস্য">দাতা সদস্য</option>
+                        <option value="আজীবন সদস্য">আজীবন সদস্য</option>
                         <option value="প্রতিষ্ঠাতা সদস্য">প্রতিষ্ঠাতা সদস্য</option>
-                        <option value="শুভানুধ্যায়ী সদস্য">শুভানুধ্যায়ী সদস্য</option>
                       </select>
                     </div>
                   </div>
@@ -2356,7 +2366,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
 
                           <p className="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-emerald-700">{m.designation}</span>
-                            {m.memberType && <span>• {m.memberType}</span>}
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                              {m.category || m.memberType || 'সাধারণ সদস্য'}
+                            </span>
                             {m.phone && <span className="font-mono text-slate-500">📞 {m.phone}</span>}
                           </p>
 

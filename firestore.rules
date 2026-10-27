@@ -98,6 +98,7 @@ service cloud.firestore {
         (!('upazila' in m) || (m.upazila is string && m.upazila.size() <= 100)) &&
         (!('district' in m) || (m.district is string && m.district.size() <= 100)) &&
         (!('memberType' in m) || (m.memberType is string && m.memberType.size() <= 100)) &&
+        (!('category' in m) || (m.category is string && m.category.size() <= 100)) &&
         (!('subscriptionType' in m) || m.subscriptionType in ['monthly', 'yearly', 'none']) &&
         (!('subscriptionAmount' in m) || (m.subscriptionAmount is number && m.subscriptionAmount >= 0)) &&
         (!('photoUrl' in m) || (m.photoUrl is string && m.photoUrl.size() <= 1000000)) &&

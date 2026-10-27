@@ -92,6 +92,7 @@
         "district": { "type": "string", "maxLength": 100 },
         "designation": { "type": "string", "maxLength": 100 },
         "memberType": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 100 },
         "joinDate": { "type": "string", "maxLength": 30 },
         "status": { "type": "string", "enum": ["active", "inactive"] },
         "subscriptionType": { "type": "string", "enum": ["monthly", "yearly", "none"] },

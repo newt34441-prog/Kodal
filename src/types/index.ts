@@ -75,6 +75,8 @@ export interface Member {
   // Foundation Info
   designation: string;
   memberType?: string; // e.g. সাধারণ সদস্য, আজীবন সদস্য, দাতা সদস্য, প্রতিষ্ঠাতা সদস্য
+  category?: string; // e.g. উপদেষ্টা পরিষদ, কার্যনির্বাহী পরিষদ, সাধারণ সদস্য, সম্মানিত সদস্য, দাতা সদস্য
+  area?: string;
   joinDate: string;
   status: 'active' | 'inactive';
   subscriptionType?: 'monthly' | 'yearly' | 'none';
