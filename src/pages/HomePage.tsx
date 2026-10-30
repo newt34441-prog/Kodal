@@ -129,7 +129,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info }) => {
                     <span>মানবতার টানে, সমাজের কল্যাণে</span>
                     <span className="w-3.5 h-[2px] bg-[#078747]" />
                   </div>
-                  <div className="text-2xs text-slate-500 font-medium">নিবন্ধিত মানবিক ও সামাজিক সংস্থা</div>
+                  <div className="text-2xs text-slate-500 font-medium">একটা মানবিক ও সামাজিক সংস্থা</div>
                 </div>
               </div>
 

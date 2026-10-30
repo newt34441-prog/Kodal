@@ -15,12 +15,21 @@ import { PoliciesPage } from './pages/PoliciesPage';
 import { AboutPage } from './pages/AboutPage';
 import { BloodDonorsPage } from './pages/BloodDonorsPage';
 import { AdminPage } from './pages/AdminPage';
+import { handleFirestoreError, OperationType, onQuotaExceededChange } from './firebase/errorHandler';
+import { AlertCircle } from 'lucide-react';
 
 function MainApp() {
   const { currentPath, navigate } = useRouter();
   const [foundationInfo, setFoundationInfo] = useState<FoundationInfo | null>(null);
-
   const [updateNotification, setUpdateNotification] = useState<string | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsubQuota = onQuotaExceededChange((exceeded) => {
+      setQuotaExceeded(exceeded);
+    });
+    return () => unsubQuota();
+  }, []);
 
   useEffect(() => {
     // Check if the app was automatically refreshed with a new code/design build
@@ -34,11 +43,17 @@ function MainApp() {
 
   useEffect(() => {
     // Listen for foundation information (name, logo, address, motto, intro)
-    const unsub = onSnapshot(doc(db, 'foundationInfo', 'main'), (docSnap) => {
-      if (docSnap.exists()) {
-        setFoundationInfo(docSnap.data() as FoundationInfo);
+    const unsub = onSnapshot(
+      doc(db, 'foundationInfo', 'main'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setFoundationInfo(docSnap.data() as FoundationInfo);
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.READ, 'foundationInfo/main');
       }
-    });
+    );
 
     return () => unsub();
   }, []);
@@ -70,6 +85,14 @@ function MainApp() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F8FC] text-slate-900 selection:bg-[#0B376B] selection:text-white relative">
+      {quotaExceeded && (
+        <div className="bg-amber-600 text-white px-4 py-2 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 shadow-sm z-50">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>
+            ফায়ারবেস ফ্রি রিড কোটা সাময়িকভাবে পূর্ণ হয়েছে (Daily Quota Limit)। সর্বশেষ সংরক্ষিত তথ্য প্রদর্শিত হচ্ছে এবং আগামীকাল কোটা স্বয়ংক্রিয়ভাবে রিসেট হবে।
+          </span>
+        </div>
+      )}
       <Header currentPath={currentPath} onNavigate={navigate} info={foundationInfo} />
       <main className="flex-1">{renderCurrentPage()}</main>
       <Footer onNavigate={navigate} info={foundationInfo} />

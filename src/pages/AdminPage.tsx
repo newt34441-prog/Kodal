@@ -279,7 +279,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<DonationSubmission, 'id'>) }));
         list.sort((a, b) => (b.submittedAt || '').localeCompare(a.submittedAt || ''));
         setSubmissions(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'donationSubmissions')),
       // Payment settings listener
       onSnapshot(doc(db, 'paymentSettings', 'main'), (docSnap) => {
         if (docSnap.exists()) {
@@ -287,58 +287,58 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
           setPaymentSettings(data);
           setPaymentForm(data);
         }
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.READ, 'paymentSettings/main')),
       // Donations listener
       onSnapshot(collection(db, 'donations'), (snap) => {
         const list: Donation[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Donation, 'id'>) }));
         list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         setDonations(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'donations')),
       // Members listener
       onSnapshot(collection(db, 'members'), (snap) => {
         const list: Member[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Member, 'id'>) }));
         setMembers(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'members')),
       // Transactions listener
       onSnapshot(collection(db, 'transactions'), (snap) => {
         const list: Transaction[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Transaction, 'id'>) }));
         list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         setTransactions(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'transactions')),
       // Activities listener
       onSnapshot(collection(db, 'activities'), (snap) => {
         const list: Activity[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Activity, 'id'>) }));
         setActivities(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'activities')),
       // Policies listener
       onSnapshot(collection(db, 'policies'), (snap) => {
         const list: Policy[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Policy, 'id'>) }));
         list.sort((a, b) => (a.orderNumber || 0) - (b.orderNumber || 0));
         setPolicies(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'policies')),
       // Advisors listener
       onSnapshot(collection(db, 'advisors'), (snap) => {
         const list: Advisor[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Advisor, 'id'>) }));
         setAdvisors(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'advisors')),
       // Executives listener
       onSnapshot(collection(db, 'executives'), (snap) => {
         const list: Executive[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Executive, 'id'>) }));
         setExecutives(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'executives')),
       // Blood Donors listener
       onSnapshot(collection(db, 'bloodDonors'), (snap) => {
         const list: BloodDonor[] = [];
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<BloodDonor, 'id'>) }));
         setBloodDonors(list);
-      }),
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'bloodDonors')),
     ];
 
     return () => {

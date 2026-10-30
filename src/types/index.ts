@@ -1,99 +1,68 @@
-export interface Donation {
-  id: string;
-  donorName: string;
-  amount: number;
-  date: string;
-  purpose: string;
-  receiptNo?: string;
-  createdAt?: string;
-  createdBy?: string;
-}
-
-export interface PaymentSettings {
-  id?: string;
-  bkashNumber?: string;
-  bkashAccountType?: 'personal' | 'merchant';
-  bkashActive: boolean;
-  bkashInstructions?: string;
-  nagadNumber?: string;
-  nagadAccountType?: 'personal' | 'merchant';
-  nagadActive: boolean;
-  nagadInstructions?: string;
-  updatedAt?: string;
-}
-
-export interface DonationSubmission {
-  id: string;
-  referenceNo: string;
-  donorName: string;
-  donorPhone: string;
-  amount: number;
-  method: 'bkash' | 'nagad';
-  recipientNumber: string;
-  transactionId: string;
-  purpose: string;
-  note?: string;
-  status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string;
-  reviewedAt?: string;
-  reviewedBy?: string;
-  rejectionReason?: string;
-  linkedTransactionId?: string;
-  linkedDonationId?: string;
-}
-
-export interface ApprovedTrxId {
-  id?: string;
-  trxId: string;
-  method: 'bkash' | 'nagad';
-  submissionId: string;
-  referenceNo: string;
-  approvedAt?: string;
-  approvedBy?: string;
+export interface FoundationInfo {
+  name: string;
+  englishName?: string;
+  motto?: string;
+  logoUrl?: string;
+  profilePhotoUrl?: string;
+  photoUpdatedAt?: string | number;
+  photoUpdatedBy?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  facebook?: string;
+  intro?: string;
+  introduction?: string;
+  establishedYear?: string;
+  registrationNo?: string;
+  bannerUrl?: string;
+  aboutText?: string;
 }
 
 export interface Member {
   id: string;
   name: string;
-  memberId: string;
+  englishName?: string;
+  role: string;
+  category?: string;
+  memberType?: string;
+  designation?: string;
+  memberId?: string;
   registrationNo?: string;
-  fatherName?: string;
-  motherName?: string;
-  dateOfBirth?: string;
-  bloodGroup?: string;
-  occupation?: string;
-  phone?: string;
-  emergencyContact?: string;
   village?: string;
   area?: string;
-  wardNo?: string;
-  union?: string;
-  upazila?: string;
-  district?: string;
-  designation: string;
-  memberType?: string;
-  category?: string;
-  joinDate: string;
-  status: 'active' | 'inactive';
-  subscriptionType?: 'monthly' | 'yearly' | 'none';
-  subscriptionAmount?: number;
+  phone?: string;
+  email?: string;
+  address?: string;
+  bloodGroup?: string;
+  joiningDate?: string;
+  joinDate?: string;
   photoUrl?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  updatedBy?: string;
+  status?: 'active' | 'inactive' | 'pending';
+  subscriptionStatus?: string;
+  subscriptionType?: 'monthly' | 'yearly' | 'none' | string;
+  subscriptionAmount?: number;
+  monthlyPledge?: number;
+  totalDonated?: number;
+  facebook?: string;
+  bio?: string;
+  serialNo?: number;
+  fatherName?: string;
+  motherName?: string;
+  occupation?: string;
 }
 
 export interface MemberFeePayment {
-  id: string;
-  memberDocId?: string;
-  date: string;
+  id?: string;
+  memberId: string;
   amount: number;
-  paymentMethod: string;
-  receiptNo?: string;
+  date?: string;
+  paymentDate?: string;
+  monthYear?: string;
+  paymentMethod?: string;
+  transactionId?: string;
   recordedBy?: string;
-  remarks?: string;
-  linkedTransactionId?: string;
-  createdAt?: string;
+  status?: string;
+  notes?: string;
 }
 
 export interface MemberSubscriptionSummary {
@@ -108,97 +77,139 @@ export interface MemberSubscriptionSummary {
   periodLabel: string;
 }
 
-export interface Transaction {
-  id: string;
-  type: 'income' | 'expense';
-  category: string;
-  amount: number;
-  date: string;
-  description: string;
-  voucherNo?: string;
-  sourceSubmissionId?: string;
-  createdAt?: string;
-  createdBy?: string;
-}
-
-export interface Activity {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  description: string;
-  photoUrl?: string;
-  status: 'upcoming' | 'ongoing' | 'completed';
-  isPublished: boolean;
-  createdAt?: string;
-}
-
-export interface Policy {
-  id: string;
-  title: string;
-  category?: string;
-  content: string;
-  orderNumber?: number;
-  isPublished: boolean;
-  createdAt?: string;
-}
-
-export interface FoundationInfo {
-  id?: string;
-  name: string;
-  address: string;
-  establishedDate: string;
-  motto?: string;
-  introduction?: string;
-  mission?: string;
-  vision?: string;
-  futurePlans?: string;
-  logoUrl?: string;
-  profilePhotoUrl?: string;
-  photoUpdatedAt?: string;
-  photoUpdatedBy?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  updatedAt?: string;
-}
-
 export interface Advisor {
   id: string;
   name: string;
   designation: string;
-  organization?: string;
+  phone?: string;
   photoUrl?: string;
-  bio?: string;
-  orderNumber?: number;
-  createdAt?: string;
+  serialNo?: number;
 }
 
 export interface Executive {
   id: string;
   name: string;
   designation: string;
-  role?: string;
+  phone?: string;
   photoUrl?: string;
-  bio?: string;
+  serialNo?: number;
+}
+
+export interface Donation {
+  id: string;
+  donorName: string;
+  amount: number;
+  date: string;
+  category?: string;
+  purpose?: string;
+  receiptNo?: string;
+  paymentMethod?: string;
+  transactionId?: string;
+  phone?: string;
+  notes?: string;
+  anonymous?: boolean;
+  verified?: boolean;
+  createdAt?: string | number;
+}
+
+export interface DonationSubmission {
+  id: string;
+  donorName: string;
+  donorPhone: string;
+  amount: number;
+  paymentMethod: string;
+  method?: string;
+  transactionId: string;
+  senderNumber?: string;
+  fundType: string;
+  status: 'pending' | 'approved' | 'rejected';
+  referenceNo?: string;
+  submittedAt?: string | number;
+  createdAt?: string | number;
+  reviewedAt?: string | number;
+  reviewedBy?: string;
+  rejectionReason?: string;
+  donorEmail?: string;
+  address?: string;
+  notes?: string;
+  verifiedDonationId?: string;
+}
+
+export interface PaymentSettings {
+  bkashNumber?: string;
+  bkashType?: string;
+  bkashActive?: boolean;
+  bkashAccountType?: string;
+  bkashInstructions?: string;
+  nagadNumber?: string;
+  nagadType?: string;
+  nagadActive?: boolean;
+  nagadAccountType?: string;
+  nagadInstructions?: string;
+  rocketNumber?: string;
+  rocketType?: string;
+  rocketActive?: boolean;
+  upayNumber?: string;
+  upayType?: string;
+  bankName?: string;
+  accountName?: string;
+  accountNumber?: string;
+  branchName?: string;
+  routingNumber?: string;
+  instruction?: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: 'income' | 'expense';
+  title: string;
+  amount: number;
+  date: string;
+  category: string;
+  description?: string;
+  voucherNo?: string;
+  recordedBy?: string;
+  createdAt?: string | number;
+}
+
+export interface Activity {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  imageUrl?: string;
+  category?: string;
+  status?: 'completed' | 'ongoing' | 'upcoming';
+  location?: string;
+  beneficiaries?: number;
+  cost?: number;
+}
+
+export interface Policy {
+  id: string;
+  title: string;
+  content: string;
+  category?: string;
+  lastUpdated?: string;
+  serialNo?: number;
   orderNumber?: number;
-  createdAt?: string;
+  isPublished?: boolean;
 }
 
 export interface BloodDonor {
   id: string;
   name: string;
-  bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-';
-  area: string;
-  lastDonationDate?: string;
+  bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | string;
+  phone: string;
   contactNumber?: string;
-  hasConsent: boolean;
-  isAvailable?: boolean;
-  createdAt?: string;
-}
-
-export interface Admin {
-  id: string;
-  email: string;
-  role: 'admin' | 'superadmin';
-  createdAt?: string;
+  upazila: string;
+  union?: string;
+  area?: string;
+  lastDonationDate?: string;
+  isAvailable: boolean;
+  hasConsent?: boolean;
+  notes?: string;
+  registeredAt?: string;
+  gender?: string;
+  age?: number;
 }

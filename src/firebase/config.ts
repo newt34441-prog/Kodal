@@ -13,9 +13,11 @@ export const googleProvider = new GoogleAuthProvider();
 export async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firebase connection check: client is offline or starting up.');
+  } catch (error: unknown) {
+    const err = error as { code?: string; message?: string };
+    const msg = err?.message || String(error);
+    if (msg.includes('the client is offline') || msg.includes('Quota exceeded') || err?.code === 'resource-exhausted') {
+      console.warn('Firebase connection check note:', msg);
     }
   }
 }
