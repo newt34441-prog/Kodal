@@ -38,6 +38,7 @@ import {
   PlusCircle,
   RefreshCw,
   Camera,
+  Megaphone,
 } from 'lucide-react';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
@@ -54,11 +55,13 @@ import {
   BloodDonor,
   DonationSubmission,
   PaymentSettings,
+  Headline,
 } from '../types';
 import { formatTaka, formatBengaliDate, toBengaliNumber } from '../utils/formatters';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
 import { ProfilePhotoManager } from '../components/admin/ProfilePhotoManager';
+import { HeadlinesManager } from '../components/admin/HeadlinesManager';
 import {
   approveDonationSubmission,
   rejectDonationSubmission,
@@ -72,6 +75,7 @@ interface AdminPageProps {
 
 type TabType =
   | 'submissions'
+  | 'headlines'
   | 'profilePhoto'
   | 'paymentSettings'
   | 'donations'
@@ -97,6 +101,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [executives, setExecutives] = useState<Executive[]>([]);
   const [bloodDonors, setBloodDonors] = useState<BloodDonor[]>([]);
+  const [headlines, setHeadlines] = useState<Headline[]>([]);
 
   // Payment settings state from Firestore collection 'paymentSettings'
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
@@ -339,6 +344,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
         snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<BloodDonor, 'id'>) }));
         setBloodDonors(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'bloodDonors')),
+      // Headlines listener
+      onSnapshot(collection(db, 'headlines'), (snap) => {
+        const list: Headline[] = [];
+        snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Headline, 'id'>) }));
+        list.sort((a, b) => (a.orderNumber || 0) - (b.orderNumber || 0));
+        setHeadlines(list);
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'headlines')),
     ];
 
     return () => {
@@ -717,7 +729,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
       if (foundationForm.futurePlans.trim()) data.futurePlans = foundationForm.futurePlans.trim();
       if (foundationForm.logoUrl) data.logoUrl = foundationForm.logoUrl;
 
-      await setDoc(doc(db, 'foundationInfo', 'main'), data);
+      await setDoc(doc(db, 'foundationInfo', 'main'), data, { merge: true });
       showFeedback('success', 'প্রতিষ্ঠানের পরিচিতি ও লোগো সফলভাবে সংরক্ষিত হয়েছে।');
     } catch (err) {
       showFeedback('error', 'প্রতিষ্ঠানের তথ্য সংরক্ষণে ত্রুটি।');
@@ -1010,6 +1022,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
         </button>
 
         <button
+          onClick={() => { setActiveTab('headlines'); setEditingId(null); }}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTab === 'headlines' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Megaphone className="w-4 h-4 text-[#DC2626]" />
+          <span>শিরোনাম বার ({toBengaliNumber(headlines.length)})</span>
+        </button>
+
+        <button
           onClick={() => { setActiveTab('profilePhoto'); setEditingId(null); }}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'profilePhoto' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
@@ -1118,6 +1140,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
           <span>অ্যাডমিন অনুমতি</span>
         </button>
       </div>
+
+      {/* ==================== TAB: HEADLINES MANAGEMENT ==================== */}
+      {activeTab === 'headlines' && (
+        <HeadlinesManager
+          headlines={headlines}
+          onDelete={confirmAndDelete}
+          onFeedback={showFeedback}
+        />
+      )}
 
       {/* ==================== TAB: PROFILE PHOTO MANAGEMENT ==================== */}
       {activeTab === 'profilePhoto' && (

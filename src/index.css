@@ -8,3 +8,32 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+@keyframes kmf-ticker-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.kmf-ticker-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: kmf-ticker-scroll var(--ticker-duration, 28s) linear infinite;
+}
+
+.kmf-ticker-container:hover .kmf-ticker-track,
+.kmf-ticker-container:focus-within .kmf-ticker-track,
+.kmf-ticker-paused .kmf-ticker-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kmf-ticker-track {
+    animation-duration: 60s;
+  }
+}
+

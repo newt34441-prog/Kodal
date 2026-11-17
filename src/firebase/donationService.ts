@@ -5,6 +5,7 @@ import {
   updateDoc,
   deleteDoc,
   getDoc,
+  deleteField,
 } from 'firebase/firestore';
 import { db, auth } from './config';
 import { DonationSubmission } from '../types';
@@ -209,8 +210,8 @@ export async function revokeApprovedDonation(
       rejectionReason: 'অ্যাডমিন কর্তৃক পূর্বের অনুমোদন প্রত্যাহার করা হয়েছে।',
       reviewedAt: new Date().toISOString(),
       reviewedBy: currentUser.email || currentUser.uid,
-      linkedTransactionId: null,
-      linkedDonationId: null,
+      linkedTransactionId: deleteField(),
+      linkedDonationId: deleteField(),
     });
   });
 }

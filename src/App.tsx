@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { AuthProvider } from './context/AuthContext';
 import { useRouter } from './hooks/useRouter';
-import { FoundationInfo } from './types';
+import { FoundationInfo, Headline } from './types';
 import { Header } from './components/common/Header';
+import { HeadlineTicker } from './components/common/HeadlineTicker';
 import { Footer } from './components/common/Footer';
+import { AppUpdatePrompt } from './components/common/AppUpdatePrompt';
 import { HomePage } from './pages/HomePage';
 import { DonationsPage } from './pages/DonationsPage';
 import { MembersPage } from './pages/MembersPage';
@@ -21,6 +23,7 @@ import { AlertCircle } from 'lucide-react';
 function MainApp() {
   const { currentPath, navigate } = useRouter();
   const [foundationInfo, setFoundationInfo] = useState<FoundationInfo | null>(null);
+  const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [updateNotification, setUpdateNotification] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState<boolean>(false);
 
@@ -56,6 +59,27 @@ function MainApp() {
     );
 
     return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    // Listen for published headlines for the scrolling ticker bar
+    const q = query(collection(db, 'headlines'), where('isPublished', '==', true));
+    const unsubHeadlines = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: Headline[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...(docSnap.data() as Omit<Headline, 'id'>) });
+        });
+        list.sort((a, b) => (a.orderNumber || 0) - (b.orderNumber || 0));
+        setHeadlines(list);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'headlines');
+      }
+    );
+
+    return () => unsubHeadlines();
   }, []);
 
   const renderCurrentPage = () => {
@@ -94,8 +118,14 @@ function MainApp() {
         </div>
       )}
       <Header currentPath={currentPath} onNavigate={navigate} info={foundationInfo} />
+      {currentPath !== '/admin' && (
+        <HeadlineTicker headlines={headlines} onNavigate={navigate} />
+      )}
       <main className="flex-1">{renderCurrentPage()}</main>
       <Footer onNavigate={navigate} info={foundationInfo} />
+
+      {/* Interactive update prompt for installed APK/PWA & web */}
+      <AppUpdatePrompt />
 
       {/* Auto-update confirmation toast */}
       {updateNotification && (

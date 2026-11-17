@@ -229,10 +229,15 @@
         "name": { "type": "string", "maxLength": 100 },
         "bloodGroup": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
         "area": { "type": "string", "maxLength": 150 },
+        "upazila": { "type": "string", "maxLength": 100 },
+        "union": { "type": "string", "maxLength": 100 },
         "lastDonationDate": { "type": "string", "maxLength": 30 },
         "contactNumber": { "type": "string", "maxLength": 30 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "notes": { "type": "string", "maxLength": 500 },
         "hasConsent": { "type": "boolean" },
         "isAvailable": { "type": "boolean" },
+        "registeredAt": { "type": "string", "maxLength": 50 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "bloodGroup", "area", "hasConsent"]
@@ -247,6 +252,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["email", "role"]
+    },
+    "Headline": {
+      "title": "Headline",
+      "description": "Scrolling ticker headline announcement displayed below the header",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 300 },
+        "badge": { "type": "string", "maxLength": 40 },
+        "linkPath": { "type": "string", "maxLength": 100 },
+        "orderNumber": { "type": "number" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["title", "isPublished"]
     }
   },
   "firestore": {
@@ -305,6 +325,10 @@
     "/admins/{adminUid}": {
       "schema": "Admin",
       "description": "System admin access permissions"
+    },
+    "/headlines/{headlineId}": {
+      "schema": "Headline",
+      "description": "Scrolling news/announcement headlines for the ticker bar"
     }
   }
 }

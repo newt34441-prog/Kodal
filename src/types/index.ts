@@ -4,18 +4,25 @@ export interface FoundationInfo {
   motto?: string;
   logoUrl?: string;
   profilePhotoUrl?: string;
-  photoUpdatedAt?: string | number;
+  photoUpdatedAt?: string;
   photoUpdatedBy?: string;
   address?: string;
   phone?: string;
   email?: string;
+  contactEmail?: string;
+  contactPhone?: string;
   facebook?: string;
   intro?: string;
   introduction?: string;
+  mission?: string;
+  vision?: string;
+  futurePlans?: string;
   establishedYear?: string;
+  establishedDate?: string;
   registrationNo?: string;
   bannerUrl?: string;
   aboutText?: string;
+  updatedAt?: string;
 }
 
 export interface Member {
@@ -28,7 +35,13 @@ export interface Member {
   designation?: string;
   memberId?: string;
   registrationNo?: string;
+  dateOfBirth?: string;
+  emergencyContact?: string;
   village?: string;
+  wardNo?: string;
+  union?: string;
+  upazila?: string;
+  district?: string;
   area?: string;
   phone?: string;
   email?: string;
@@ -37,9 +50,9 @@ export interface Member {
   joiningDate?: string;
   joinDate?: string;
   photoUrl?: string;
-  status?: 'active' | 'inactive' | 'pending';
+  status?: 'active' | 'inactive';
   subscriptionStatus?: string;
-  subscriptionType?: 'monthly' | 'yearly' | 'none' | string;
+  subscriptionType?: 'monthly' | 'yearly' | 'none';
   subscriptionAmount?: number;
   monthlyPledge?: number;
   totalDonated?: number;
@@ -49,20 +62,27 @@ export interface Member {
   fatherName?: string;
   motherName?: string;
   occupation?: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface MemberFeePayment {
   id?: string;
-  memberId: string;
+  memberId?: string;
+  memberDocId?: string;
   amount: number;
   date?: string;
   paymentDate?: string;
   monthYear?: string;
   paymentMethod?: string;
+  receiptNo?: string;
+  remarks?: string;
+  linkedTransactionId?: string;
   transactionId?: string;
   recordedBy?: string;
   status?: string;
   notes?: string;
+  createdAt?: string;
 }
 
 export interface MemberSubscriptionSummary {
@@ -81,6 +101,9 @@ export interface Advisor {
   id: string;
   name: string;
   designation: string;
+  organization?: string;
+  bio?: string;
+  orderNumber?: number;
   phone?: string;
   photoUrl?: string;
   serialNo?: number;
@@ -90,6 +113,9 @@ export interface Executive {
   id: string;
   name: string;
   designation: string;
+  role?: string;
+  bio?: string;
+  orderNumber?: number;
   phone?: string;
   photoUrl?: string;
   serialNo?: number;
@@ -117,20 +143,25 @@ export interface DonationSubmission {
   donorName: string;
   donorPhone: string;
   amount: number;
-  paymentMethod: string;
-  method?: string;
+  paymentMethod?: string;
+  method?: 'bkash' | 'nagad' | string;
+  recipientNumber?: string;
   transactionId: string;
   senderNumber?: string;
-  fundType: string;
+  fundType?: string;
+  purpose?: string;
   status: 'pending' | 'approved' | 'rejected';
   referenceNo?: string;
-  submittedAt?: string | number;
+  submittedAt?: string;
   createdAt?: string | number;
-  reviewedAt?: string | number;
+  reviewedAt?: string;
   reviewedBy?: string;
   rejectionReason?: string;
+  linkedTransactionId?: string;
+  linkedDonationId?: string;
   donorEmail?: string;
   address?: string;
+  note?: string;
   notes?: string;
   verifiedDonationId?: string;
 }
@@ -157,17 +188,19 @@ export interface PaymentSettings {
   branchName?: string;
   routingNumber?: string;
   instruction?: string;
+  updatedAt?: string;
 }
 
 export interface Transaction {
   id: string;
   type: 'income' | 'expense';
-  title: string;
+  title?: string;
   amount: number;
   date: string;
   category: string;
   description?: string;
   voucherNo?: string;
+  sourceSubmissionId?: string;
   recordedBy?: string;
   createdAt?: string | number;
 }
@@ -178,8 +211,10 @@ export interface Activity {
   description: string;
   date: string;
   imageUrl?: string;
+  photoUrl?: string;
   category?: string;
   status?: 'completed' | 'ongoing' | 'upcoming';
+  isPublished?: boolean;
   location?: string;
   beneficiaries?: number;
   cost?: number;
@@ -199,10 +234,10 @@ export interface Policy {
 export interface BloodDonor {
   id: string;
   name: string;
-  bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | string;
-  phone: string;
+  bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-';
+  phone?: string;
   contactNumber?: string;
-  upazila: string;
+  upazila?: string;
   union?: string;
   area?: string;
   lastDonationDate?: string;
@@ -212,4 +247,15 @@ export interface BloodDonor {
   registeredAt?: string;
   gender?: string;
   age?: number;
+}
+
+export interface Headline {
+  id: string;
+  title: string;
+  badge?: string;
+  linkPath?: string;
+  orderNumber?: number;
+  isPublished: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }

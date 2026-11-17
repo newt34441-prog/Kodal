@@ -64,8 +64,8 @@ service cloud.firestore {
         (!('reviewedAt' in s) || (s.reviewedAt is string && s.reviewedAt.size() <= 50)) &&
         (!('reviewedBy' in s) || (s.reviewedBy is string && s.reviewedBy.size() <= 128)) &&
         (!('rejectionReason' in s) || (s.rejectionReason is string && s.rejectionReason.size() <= 300)) &&
-        (!('linkedTransactionId' in s) || (s.linkedTransactionId is string && s.linkedTransactionId.size() <= 128)) &&
-        (!('linkedDonationId' in s) || (s.linkedDonationId is string && s.linkedDonationId.size() <= 128));
+        (!('linkedTransactionId' in s) || s.linkedTransactionId == null || (s.linkedTransactionId is string && s.linkedTransactionId.size() <= 128)) &&
+        (!('linkedDonationId' in s) || s.linkedDonationId == null || (s.linkedDonationId is string && s.linkedDonationId.size() <= 128));
     }
 
     function isValidDonation(d) {
@@ -197,13 +197,31 @@ service cloud.firestore {
         b.hasConsent is bool &&
         (!('isAvailable' in b) || (b.isAvailable is bool)) &&
         (!('lastDonationDate' in b) || (b.lastDonationDate is string && b.lastDonationDate.size() <= 30)) &&
-        (!('contactNumber' in b) || (b.contactNumber is string && b.contactNumber.size() <= 30));
+        (!('contactNumber' in b) || (b.contactNumber is string && b.contactNumber.size() <= 30)) &&
+        (!('phone' in b) || (b.phone is string && b.phone.size() <= 30)) &&
+        (!('upazila' in b) || (b.upazila is string && b.upazila.size() <= 100)) &&
+        (!('union' in b) || (b.union is string && b.union.size() <= 100)) &&
+        (!('notes' in b) || (b.notes is string && b.notes.size() <= 500)) &&
+        (!('registeredAt' in b) || (b.registeredAt is string && b.registeredAt.size() <= 50)) &&
+        (!('createdAt' in b) || (b.createdAt is string && b.createdAt.size() <= 50) || (b.createdAt is timestamp));
     }
 
     function isValidAdminDoc(adm) {
       return adm.keys().hasAll(['email', 'role']) &&
         adm.email is string && adm.email.size() > 0 && adm.email.size() <= 150 &&
         adm.role in ['admin', 'superadmin'];
+    }
+
+    function isValidHeadline(h) {
+      return h.keys().hasAll(['title', 'isPublished']) &&
+        h.keys().hasOnly(['title', 'badge', 'linkPath', 'orderNumber', 'isPublished', 'createdAt', 'updatedAt']) &&
+        h.title is string && h.title.size() > 0 && h.title.size() <= 300 &&
+        h.isPublished is bool &&
+        (!('badge' in h) || (h.badge is string && h.badge.size() <= 40)) &&
+        (!('linkPath' in h) || (h.linkPath is string && h.linkPath.size() <= 100)) &&
+        (!('orderNumber' in h) || (h.orderNumber is number)) &&
+        (!('createdAt' in h) || (h.createdAt is string && h.createdAt.size() <= 50)) &&
+        (!('updatedAt' in h) || (h.updatedAt is string && h.updatedAt.size() <= 50));
     }
 
     // Match rules for Collections
@@ -310,11 +328,11 @@ service cloud.firestore {
       allow delete: if isValidId(executiveId) && isAdmin();
     }
 
-    // 9. Blood Donors: Public read with consent only (or admin), Admin write
+    // 9. Blood Donors: Public read & self-registration with consent only (or admin), Admin edit/delete
     match /bloodDonors/{donorId} {
       allow get: if isValidId(donorId) && (resource.data.hasConsent == true || isAdmin());
       allow list: if resource.data.hasConsent == true || isAdmin();
-      allow create: if isValidId(donorId) && isAdmin() && isValidBloodDonor(incoming());
+      allow create: if isValidId(donorId) && isValidBloodDonor(incoming()) && (incoming().hasConsent == true || isAdmin());
       allow update: if isValidId(donorId) && isAdmin() && isValidBloodDonor(incoming());
       allow delete: if isValidId(donorId) && isAdmin();
     }
@@ -326,6 +344,15 @@ service cloud.firestore {
       allow create: if isValidId(adminUid) && isAdmin() && isValidAdminDoc(incoming());
       allow update: if isValidId(adminUid) && isAdmin() && isValidAdminDoc(incoming());
       allow delete: if isValidId(adminUid) && isAdmin();
+    }
+
+    // 11. Headlines: Public read if published (or admin), Admin write
+    match /headlines/{headlineId} {
+      allow get: if isValidId(headlineId) && (resource.data.isPublished == true || isAdmin());
+      allow list: if resource.data.isPublished == true || isAdmin();
+      allow create: if isValidId(headlineId) && isAdmin() && isValidHeadline(incoming());
+      allow update: if isValidId(headlineId) && isAdmin() && isValidHeadline(incoming());
+      allow delete: if isValidId(headlineId) && isAdmin();
     }
   }
 }

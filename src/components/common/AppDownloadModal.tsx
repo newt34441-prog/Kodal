@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Smartphone,
   Share2,
@@ -10,8 +10,20 @@ import {
   Check,
   ShieldCheck,
   HelpCircle,
+  RefreshCw,
+  Bell,
+  BellRing,
 } from 'lucide-react';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import {
+  AppUpdateState,
+  checkForAppUpdate,
+  forcePurgeCacheAndReload,
+  formatBengaliBuildDate,
+  getAppUpdateState,
+  requestUpdateNotificationPermission,
+  subscribeAppUpdate,
+} from '../../utils/pwaAutoUpdate';
 
 interface AppDownloadModalProps {
   isOpen: boolean;
@@ -22,8 +34,37 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'whatsapp' | 'install' | 'apk'>('whatsapp');
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateCheckMsg, setUpdateCheckMsg] = useState<string | null>(null);
+  const [updateState, setUpdateState] = useState<AppUpdateState>(() => getAppUpdateState());
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission | 'unsupported'>(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+    return Notification.permission;
+  });
+
+  useEffect(() => {
+    return subscribeAppUpdate((next) => setUpdateState(next));
+  }, []);
 
   if (!isOpen) return null;
+
+  const handleManualUpdateCheck = async () => {
+    setCheckingUpdate(true);
+    setUpdateCheckMsg(null);
+    const res = await checkForAppUpdate(true);
+    setCheckingUpdate(false);
+    if (res.updateAvailable) {
+      setUpdateCheckMsg('নতুন আপডেট পাওয়া গেছে! আপডেট পপআপ প্রদর্শিত হয়েছে।');
+      onClose();
+    } else {
+      setUpdateCheckMsg('আপনার অ্যাপটি ইতিমধ্যেই সর্বশেষ সংস্করণে রয়েছে।');
+    }
+  };
+
+  const handleEnableNotif = async () => {
+    const perm = await requestUpdateNotificationPermission();
+    setNotifPerm(perm);
+  };
 
   // Real app URL
   const appUrl = window.location.origin;
@@ -219,6 +260,90 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
                   </div>
                 </div>
               )}
+
+              {/* App Update Check, Version Info & Notification Controls (especially for Installed/APK Mode) */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-800">অ্যাপ ভার্সন ও আপডেট তথ্য</span>
+                  {notifPerm === 'granted' && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#078747]">
+                      <BellRing className="w-3.5 h-3.5" />
+                      চালু আছে
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <div>
+                    <span className="text-slate-500 block">ভার্সন নম্বর</span>
+                    <span className="font-bold text-[#0B376B] font-mono">
+                      {updateState.currentVersionNumber}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">আপডেটের অবস্থা</span>
+                    <span
+                      className={`font-bold ${
+                        updateState.updateAvailable
+                          ? 'text-[#DC2626]'
+                          : !updateState.isOnline
+                          ? 'text-amber-700'
+                          : 'text-[#078747]'
+                      }`}
+                    >
+                      {updateState.updateAvailable
+                        ? 'নতুন আপডেট পাওয়া গেছে'
+                        : !updateState.isOnline
+                        ? 'অফলাইন মোড'
+                        : 'আপ-টু-ডেট'}
+                    </span>
+                  </div>
+                  <div className="col-span-2 pt-1 border-t border-slate-100">
+                    <span className="text-slate-500">সর্বশেষ আপডেটের তারিখ: </span>
+                    <span className="font-semibold text-slate-700">
+                      {formatBengaliBuildDate(updateState.buildTime)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    disabled={checkingUpdate}
+                    onClick={handleManualUpdateCheck}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-[#0B376B] text-xs font-bold transition-colors cursor-pointer disabled:opacity-60"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${checkingUpdate ? 'animate-spin' : ''}`} />
+                    <span>{checkingUpdate ? 'যাচাই হচ্ছে...' : 'নতুন আপডেট চেক করুন'}</span>
+                  </button>
+
+                  {notifPerm === 'default' && (
+                    <button
+                      type="button"
+                      onClick={handleEnableNotif}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#078747] hover:bg-[#056032] text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                      <span>আপডেট অ্যালার্ট চালু করুন</span>
+                    </button>
+                  )}
+                </div>
+
+                {updateCheckMsg && (
+                  <p className="text-[11px] font-semibold text-[#078747] text-center">
+                    {updateCheckMsg}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => forcePurgeCacheAndReload()}
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-[11px] font-semibold text-slate-600 hover:text-[#0B376B] hover:bg-slate-200/70 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>ক্যাশ পরিষ্কার করে নতুন সংস্করণ রিলোড করুন</span>
+                </button>
+              </div>
             </div>
           )}
 

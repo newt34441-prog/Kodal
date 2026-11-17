@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, doc } from 'firebase/firestore';
-import { ArrowLeft, Building2, Calendar, MapPin, Target, Compass, Sparkles, UserCheck } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, MapPin, Target, Compass, Sparkles, UserCheck, Smartphone, RefreshCw, CheckCircle2, WifiOff } from 'lucide-react';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
 import { Advisor, Executive, FoundationInfo } from '../types';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import {
+  AppUpdateState,
+  applyAppUpdate,
+  checkForAppUpdate,
+  formatBengaliBuildDate,
+  getAppUpdateState,
+  subscribeAppUpdate,
+} from '../utils/pwaAutoUpdate';
 
 interface AboutPageProps {
   onNavigate: (path: string) => void;
@@ -15,6 +23,27 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate, info }) => {
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [executives, setExecutives] = useState<Executive[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [updateState, setUpdateState] = useState<AppUpdateState>(() => getAppUpdateState());
+  const [checkNote, setCheckNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubUpdate = subscribeAppUpdate((next) => {
+      setUpdateState(next);
+    });
+    return () => unsubUpdate();
+  }, []);
+
+  const handleCheckUpdate = async () => {
+    setCheckNote(null);
+    const res = await checkForAppUpdate(true);
+    if (res.offline) {
+      setCheckNote('ইন্টারনেট সংযোগ নেই — অফলাইন মোডে সংরক্ষিত সংস্করণ চালু আছে।');
+    } else if (res.updateAvailable) {
+      setCheckNote('নতুন আপডেট পাওয়া গেছে। সর্বশেষ সুবিধা পেতে অ্যাপটি আপডেট করুন।');
+    } else {
+      setCheckNote('সর্বশেষ সংস্করণ চালু আছে।');
+    }
+  };
 
   useEffect(() => {
     // Load Advisors
@@ -223,6 +252,98 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate, info }) => {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* App Version & Update Information */}
+      <div className="mt-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0B376B] border border-blue-200 flex items-center justify-center">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-blue-950">অ্যাপ ও ভার্সন তথ্য</h3>
+              <p className="text-xs text-slate-500">ইনস্টলকৃত অ্যাপ ও ব্রাউজার সংস্করণের হালনাগাদ তথ্য</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {updateState.updateAvailable ? (
+              <button
+                type="button"
+                disabled={updateState.updating}
+                onClick={() => applyAppUpdate()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#078747] hover:bg-[#056032] disabled:opacity-60 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${updateState.updating ? 'animate-spin' : ''}`} />
+                <span>{updateState.updating ? 'আপডেট হচ্ছে...' : 'এখনই আপডেট করুন'}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={updateState.checking}
+                onClick={handleCheckUpdate}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-60 text-[#0B376B] text-xs font-bold transition-colors cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${updateState.checking ? 'animate-spin' : ''}`} />
+                <span>{updateState.checking ? 'পরীক্ষা হচ্ছে...' : 'আপডেট পরীক্ষা করুন'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <p className="text-xs text-slate-500 font-medium">অ্যাপের নাম</p>
+            <p className="font-bold text-slate-900 mt-0.5">{updateState.appName}</p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <p className="text-xs text-slate-500 font-medium">বর্তমান ভার্সন নম্বর</p>
+            <p className="font-bold text-[#0B376B] font-mono mt-0.5">{updateState.currentVersionNumber}</p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <p className="text-xs text-slate-500 font-medium">সর্বশেষ আপডেটের তারিখ</p>
+            <p className="font-semibold text-slate-800 mt-0.5">
+              {formatBengaliBuildDate(updateState.buildTime)}
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <p className="text-xs text-slate-500 font-medium">আপডেটের অবস্থা</p>
+            <div className="mt-1">
+              {!updateState.isOnline ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  <span>অফলাইন মোড — সংরক্ষিত সংস্করণ চালু আছে</span>
+                </span>
+              ) : updateState.checking ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>নতুন আপডেট যাচাই করা হচ্ছে...</span>
+                </span>
+              ) : updateState.updateAvailable ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#DC2626]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>
+                    নতুন আপডেট পাওয়া গেছে
+                    {updateState.latestVersionNumber ? ` (${updateState.latestVersionNumber})` : ''}
+                  </span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#078747]">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>সর্বশেষ সংস্করণ চালু আছে (আপ-টু-ডেট)</span>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {checkNote && (
+          <p className="text-xs font-semibold text-[#078747] mt-3 text-center">{checkNote}</p>
         )}
       </div>
     </div>
