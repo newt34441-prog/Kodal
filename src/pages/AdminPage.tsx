@@ -6,8 +6,6 @@ import {
   deleteDoc,
   updateDoc,
   onSnapshot,
-  query,
-  orderBy,
 } from 'firebase/firestore';
 import {
   Lock,
@@ -15,7 +13,6 @@ import {
   Trash2,
   Edit,
   CheckCircle,
-  XCircle,
   AlertTriangle,
   Upload,
   ArrowLeft,
@@ -39,6 +36,8 @@ import {
   RefreshCw,
   Camera,
   Megaphone,
+  Image as ImageIcon,
+  ShieldCheck,
 } from 'lucide-react';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
@@ -56,11 +55,13 @@ import {
   DonationSubmission,
   PaymentSettings,
   Headline,
+  SiteAsset,
 } from '../types';
 import { formatTaka, formatBengaliDate, toBengaliNumber } from '../utils/formatters';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
 import { ProfilePhotoManager } from '../components/admin/ProfilePhotoManager';
+import { HeroBannerManager } from '../components/admin/HeroBannerManager';
 import { HeadlinesManager } from '../components/admin/HeadlinesManager';
 import {
   approveDonationSubmission,
@@ -71,12 +72,14 @@ import {
 interface AdminPageProps {
   onNavigate: (path: string) => void;
   info?: FoundationInfo | null;
+  heroBanner?: SiteAsset | null;
 }
 
 type TabType =
   | 'submissions'
   | 'headlines'
   | 'profilePhoto'
+  | 'heroBanner'
   | 'paymentSettings'
   | 'donations'
   | 'members'
@@ -87,8 +90,8 @@ type TabType =
   | 'blood'
   | 'admins';
 
-export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
-  const { user, isAdmin, signInWithGoogle, signOutUser, loading: authLoading } = useAuth();
+export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info, heroBanner }) => {
+  const { user, isAdmin, isSuperAdmin, signInWithGoogle, signOutUser, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('submissions');
 
   // Real-time collections data
@@ -824,9 +827,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
     }
   };
 
-  // Admin invite
+  // Admin invite (Super Admin only)
   const handleAdminAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSuperAdmin) {
+      showFeedback('error', 'শুধুমাত্র Super Admin নতুন অ্যাডমিন অনুমোদন করতে পারবেন।');
+      return;
+    }
     try {
       if (!adminUid.trim() || !adminEmail.trim()) {
         showFeedback('error', 'অনুগ্রহ করে অ্যাডমিনের UID এবং ইমেইল দুটোই প্রদান করুন।');
@@ -1041,6 +1048,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
           <span>প্রোফাইল ছবি পরিবর্তন</span>
         </button>
 
+        {isSuperAdmin && (
+          <button
+            onClick={() => { setActiveTab('heroBanner'); setEditingId(null); }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'heroBanner' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ImageIcon className="w-4 h-4 text-[#078747]" />
+            <span>হোমপেজের বড় ছবি পরিবর্তন</span>
+          </button>
+        )}
+
         <button
           onClick={() => { setActiveTab('paymentSettings'); setEditingId(null); }}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -1157,6 +1176,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
           adminEmail={user.email}
           onSuccess={() => {
             showFeedback('success', 'ফাউন্ডেশনের প্রোফাইল ছবি ও লোগো সফলভাবে পরিবর্তন ও হালনাগাদ করা হয়েছে।');
+          }}
+        />
+      )}
+
+      {/* ==================== TAB: HERO BANNER MANAGEMENT (SUPER ADMIN ONLY) ==================== */}
+      {activeTab === 'heroBanner' && isSuperAdmin && (
+        <HeroBannerManager
+          currentBanner={heroBanner || null}
+          isSuperAdmin={isSuperAdmin}
+          adminEmail={user.email}
+          onSuccess={() => {
+            showFeedback('success', 'হোমপেজের বড় ব্যানার ছবি সফলভাবে পরিবর্তন ও লাইভ করা হয়েছে।');
           }}
         />
       )}
@@ -1289,7 +1320,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
               {filteredSubmissions.map((sub) => {
                 const isPending = sub.status === 'pending';
                 const isApproved = sub.status === 'approved';
-                const isRejected = sub.status === 'rejected';
 
                 return (
                   <div
@@ -3446,48 +3476,66 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, info }) => {
       {/* ==================== TAB: ADMIN ROLES ==================== */}
       {activeTab === 'admins' && (
         <div className="max-w-xl mx-auto bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-          <h3 className="font-bold text-slate-900 text-lg mb-2">অনুমোদিত অ্যাডমিন ব্যবস্থাপনা</h3>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h3 className="font-bold text-slate-900 text-lg">অনুমোদিত অ্যাডমিন ব্যবস্থাপনা</h3>
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                isSuperAdmin
+                  ? 'bg-emerald-50 text-[#078747] border border-emerald-200'
+                  : 'bg-slate-100 text-slate-600 border border-slate-200'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {isSuperAdmin ? 'Super Admin' : 'সাধারণ অ্যাডমিন'}
+            </span>
+          </div>
           <p className="text-xs text-slate-500 mb-6 leading-relaxed">
             কোনো নতুন বিশ্বস্ত সদস্যকে অ্যাডমিন অ্যাক্সেস দিতে তাঁর Firebase Auth User ID (UID) এবং ইমেইল যোগ করুন।
           </p>
 
           <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 mb-6 text-xs text-blue-900">
-            <p className="font-bold mb-1">প্রধান অ্যাডমিন (Default Owner):</p>
+            <p className="font-bold mb-1">প্রধান সুপার অ্যাডমিন (Default Owner):</p>
             <p className="font-mono">newt34441@gmail.com</p>
           </div>
 
-          <form onSubmit={handleAdminAdd} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">অ্যাডমিনের ইমেইল *</label>
-              <input
-                type="email"
-                required
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-                placeholder="admin@example.com"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-900"
-              />
-            </div>
+          {isSuperAdmin ? (
+            <form onSubmit={handleAdminAdd} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">অ্যাডমিনের ইমেইল *</label>
+                <input
+                  type="email"
+                  required
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-900"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Firebase Auth User ID (UID) *</label>
-              <input
-                type="text"
-                required
-                value={adminUid}
-                onChange={(e) => setAdminUid(e.target.value)}
-                placeholder="ব্যবহারকারীর Firebase Auth UID"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-900 font-mono"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Firebase Auth User ID (UID) *</label>
+                <input
+                  type="text"
+                  required
+                  value={adminUid}
+                  onChange={(e) => setAdminUid(e.target.value)}
+                  placeholder="ব্যবহারকারীর Firebase Auth UID"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-900 font-mono"
+                />
+              </div>
 
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 bg-blue-950 text-white rounded-xl text-xs font-bold hover:bg-blue-900 transition-colors cursor-pointer"
-            >
-              নতুন অ্যাডমিন অনুমোদন দিন
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-blue-950 text-white rounded-xl text-xs font-bold hover:bg-blue-900 transition-colors cursor-pointer"
+              >
+                নতুন অ্যাডমিন অনুমোদন দিন
+              </button>
+            </form>
+          ) : (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+              নতুন অ্যাডমিন যুক্ত করা বা হোমপেজের বড় ছবি পরিবর্তন করার অনুমতি শুধুমাত্র <strong>Super Admin</strong>-এর কাছে সংরক্ষিত।
+            </div>
+          )}
         </div>
       )}
     </div>

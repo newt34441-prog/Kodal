@@ -259,3 +259,11 @@ export interface Headline {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface SiteAsset {
+  imageUrl: string;
+  altText?: string;
+  updatedAt: string;
+  updatedBy?: string;
+  isDefault?: boolean;
+}

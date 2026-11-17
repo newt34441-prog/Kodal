@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
-import { ArrowLeft, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
 import { Policy } from '../types';

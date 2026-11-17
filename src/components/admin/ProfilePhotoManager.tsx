@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
-  RotateCcw,
   Sparkles,
   Image as ImageIcon,
   Check,

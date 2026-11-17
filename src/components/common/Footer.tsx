@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, MapPin, Smartphone, Share2 } from 'lucide-react';
+import { Lock, MapPin, Smartphone } from 'lucide-react';
 import { AppDownloadModal } from './AppDownloadModal';
 import { FoundationInfo } from '../../types';
 

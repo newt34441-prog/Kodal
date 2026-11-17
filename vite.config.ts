@@ -78,7 +78,8 @@ export default defineConfig(({ command }) => {
       kmfVersionManifestPlugin(activeVersion, versionNumber, buildTime, isBuild),
       VitePWA({
         registerType: 'prompt',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'assets/images/foundation_logo.png'],
+        includeAssets: [],
+        includeManifestIcons: false,
         manifest: {
           id: '/',
           name: 'কোদালপুর মানবিক ফাউন্ডেশন',
@@ -173,6 +174,23 @@ export default defineConfig(({ command }) => {
         },
       }),
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('node_modules/lucide-react')) {
+              return 'vendor-icons';
+            }
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

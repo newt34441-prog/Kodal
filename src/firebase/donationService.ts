@@ -3,8 +3,6 @@ import {
   runTransaction,
   setDoc,
   updateDoc,
-  deleteDoc,
-  getDoc,
   deleteField,
 } from 'firebase/firestore';
 import { db, auth } from './config';

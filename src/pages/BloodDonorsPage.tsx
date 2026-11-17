@@ -12,7 +12,6 @@ import {
   Search,
   Phone,
   MapPin,
-  Calendar,
   CheckCircle2,
   Clock,
   Heart,
@@ -20,9 +19,6 @@ import {
   X,
   AlertCircle,
   ShieldCheck,
-  User,
-  Filter,
-  Activity as ActivityIcon,
   PhoneCall,
   MessageSquare,
 } from 'lucide-react';
@@ -48,7 +44,7 @@ const UPAZILAS = [
   'শরীয়তপুর সদর',
 ];
 
-export const BloodDonorsPage: React.FC<BloodDonorsPageProps> = ({ onNavigate }) => {
+export const BloodDonorsPage: React.FC<BloodDonorsPageProps> = ({ onNavigate: _onNavigate }) => {
   const [donors, setDonors] = useState<BloodDonor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -282,6 +278,12 @@ export const BloodDonorsPage: React.FC<BloodDonorsPageProps> = ({ onNavigate }) 
       </div>
 
       {/* Donors List */}
+      {error && (
+        <div className="mb-4 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+          <AlertCircle size={18} className="shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
       {loading ? (
         <div className="py-16 text-center">
           <LoadingSpinner />

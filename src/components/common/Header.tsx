@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, MapPin, Smartphone, ChevronDown, Phone, Heart } from 'lucide-react';
+import { ArrowLeft, Smartphone, ChevronDown, Phone, Heart } from 'lucide-react';
 import { FoundationInfo } from '../../types';
 import { AppDownloadModal } from './AppDownloadModal';
 

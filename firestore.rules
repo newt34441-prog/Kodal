@@ -25,7 +25,16 @@ service cloud.firestore {
 
     function isBootstrappedAdmin() {
       return isSignedIn() &&
-        request.auth.token.email == 'newt34441@gmail.com';
+        request.auth.token.email == 'newt34441@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
+    function isSuperAdmin() {
+      return isBootstrappedAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'superadmin'
+      );
     }
 
     function isAdmin() {
@@ -224,6 +233,16 @@ service cloud.firestore {
         (!('updatedAt' in h) || (h.updatedAt is string && h.updatedAt.size() <= 50));
     }
 
+    function isValidSiteAsset(a) {
+      return a.keys().hasAll(['imageUrl', 'updatedAt']) &&
+        a.keys().hasOnly(['imageUrl', 'altText', 'updatedAt', 'updatedBy', 'isDefault']) &&
+        a.imageUrl is string && a.imageUrl.size() > 0 && a.imageUrl.size() <= 950000 &&
+        a.updatedAt is string && a.updatedAt.size() > 0 && a.updatedAt.size() <= 50 &&
+        (!('altText' in a) || (a.altText is string && a.altText.size() <= 200)) &&
+        (!('updatedBy' in a) || (a.updatedBy is string && a.updatedBy.size() <= 150)) &&
+        (!('isDefault' in a) || (a.isDefault is bool));
+    }
+
     // Match rules for Collections
 
     // 0. Payment Settings: Public read, Admin write
@@ -337,13 +356,13 @@ service cloud.firestore {
       allow delete: if isValidId(donorId) && isAdmin();
     }
 
-    // 10. Admins: Admin only read and write
+    // 10. Admins: Admin read, Super Admin only write (prevents privilege escalation)
     match /admins/{adminUid} {
-      allow get: if isValidId(adminUid) && isAdmin();
+      allow get: if isValidId(adminUid) && (isAdmin() || (isSignedIn() && request.auth.uid == adminUid));
       allow list: if isAdmin();
-      allow create: if isValidId(adminUid) && isAdmin() && isValidAdminDoc(incoming());
-      allow update: if isValidId(adminUid) && isAdmin() && isValidAdminDoc(incoming());
-      allow delete: if isValidId(adminUid) && isAdmin();
+      allow create: if isValidId(adminUid) && isSuperAdmin() && isValidAdminDoc(incoming());
+      allow update: if isValidId(adminUid) && isSuperAdmin() && isValidAdminDoc(incoming());
+      allow delete: if isValidId(adminUid) && isSuperAdmin();
     }
 
     // 11. Headlines: Public read if published (or admin), Admin write
@@ -353,6 +372,14 @@ service cloud.firestore {
       allow create: if isValidId(headlineId) && isAdmin() && isValidHeadline(incoming());
       allow update: if isValidId(headlineId) && isAdmin() && isValidHeadline(incoming());
       allow delete: if isValidId(headlineId) && isAdmin();
+    }
+
+    // 12. Site Assets (Homepage Hero Banner): Public read, Super Admin only write
+    match /siteAssets/{assetId} {
+      allow get: if isValidId(assetId);
+      allow list: if true;
+      allow create, update: if isValidId(assetId) && isSuperAdmin() && isValidSiteAsset(incoming());
+      allow delete: if isValidId(assetId) && isSuperAdmin();
     }
   }
 }

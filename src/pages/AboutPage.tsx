@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, doc } from 'firebase/firestore';
-import { ArrowLeft, Building2, Calendar, MapPin, Target, Compass, Sparkles, UserCheck, Smartphone, RefreshCw, CheckCircle2, WifiOff } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { ArrowLeft, Calendar, MapPin, Target, Compass, Sparkles, UserCheck, Smartphone, RefreshCw, CheckCircle2, WifiOff } from 'lucide-react';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
 import { Advisor, Executive, FoundationInfo } from '../types';

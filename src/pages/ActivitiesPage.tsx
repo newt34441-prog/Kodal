@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { ArrowLeft, MapPin, Calendar, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar } from 'lucide-react';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
 import { Activity } from '../types';

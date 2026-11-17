@@ -11,16 +11,27 @@ import {
   Smartphone,
   Share2,
 } from 'lucide-react';
-import { FoundationInfo } from '../types';
+import { FoundationInfo, SiteAsset } from '../types';
 import { AppDownloadModal } from '../components/common/AppDownloadModal';
+
+const DEFAULT_HERO_BANNER_SRC = '/assets/images/hero_plant_clean.png';
+const DEFAULT_HERO_ALT = 'মানবতার সেবায় চারা রোপণ ও নদীমাতৃক বাংলাদেশ';
 
 interface HomePageProps {
   onNavigate: (path: string) => void;
   info?: FoundationInfo | null;
+  heroBanner?: SiteAsset | null;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info }) => {
+export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info, heroBanner }) => {
   const [showAppModal, setShowAppModal] = useState(false);
+
+  const rawHeroUrl = heroBanner?.imageUrl?.trim();
+  const heroBannerSrc = rawHeroUrl
+    ? rawHeroUrl.startsWith('http') && heroBanner?.updatedAt
+      ? `${rawHeroUrl}${rawHeroUrl.includes('?') ? '&' : '?'}v=${encodeURIComponent(heroBanner.updatedAt)}`
+      : rawHeroUrl
+    : DEFAULT_HERO_BANNER_SRC;
 
   // Exactly 7 primary cards configured as per the reference design
   const primaryCardsRow1 = [
@@ -164,13 +175,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info }) => {
               </div>
             </div>
 
-            {/* Right Visual Column: High-fidelity River & Sapling image */}
+            {/* Right Visual Column: High-fidelity Hero Banner (16:9 responsive) */}
             <div className="lg:col-span-5 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-md rounded-3xl overflow-hidden shadow-lg border-2 border-white/80 bg-white">
+              <div className="relative w-full max-w-md aspect-video rounded-3xl overflow-hidden shadow-lg border-2 border-white/80 bg-white">
                 <img
-                  src="/assets/images/hero_plant_clean.png"
-                  alt="মানবতার সেবায় চারা রোপণ ও নদীমাতৃক বাংলাদেশ"
-                  className="w-full h-auto object-cover max-h-[340px] transform hover:scale-102 transition-transform duration-500"
+                  src={heroBannerSrc}
+                  alt={heroBanner?.altText || DEFAULT_HERO_ALT}
+                  className="w-full h-full object-cover object-center transform hover:scale-102 transition-transform duration-500"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith(DEFAULT_HERO_BANNER_SRC)) {
+                      target.src = DEFAULT_HERO_BANNER_SRC;
+                    }
+                  }}
                 />
               </div>
             </div>

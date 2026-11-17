@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { AuthProvider } from './context/AuthContext';
 import { useRouter } from './hooks/useRouter';
-import { FoundationInfo, Headline } from './types';
+import { FoundationInfo, Headline, SiteAsset } from './types';
 import { Header } from './components/common/Header';
 import { HeadlineTicker } from './components/common/HeadlineTicker';
 import { Footer } from './components/common/Footer';
 import { AppUpdatePrompt } from './components/common/AppUpdatePrompt';
+import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { HomePage } from './pages/HomePage';
 import { DonationsPage } from './pages/DonationsPage';
 import { MembersPage } from './pages/MembersPage';
@@ -16,13 +17,24 @@ import { ActivitiesPage } from './pages/ActivitiesPage';
 import { PoliciesPage } from './pages/PoliciesPage';
 import { AboutPage } from './pages/AboutPage';
 import { BloodDonorsPage } from './pages/BloodDonorsPage';
-import { AdminPage } from './pages/AdminPage';
 import { handleFirestoreError, OperationType, onQuotaExceededChange } from './firebase/errorHandler';
 import { AlertCircle } from 'lucide-react';
+
+const AdminPage = lazy(() =>
+  import('./pages/AdminPage').then((m) => ({ default: m.AdminPage }))
+);
 
 function MainApp() {
   const { currentPath, navigate } = useRouter();
   const [foundationInfo, setFoundationInfo] = useState<FoundationInfo | null>(null);
+  const [heroBanner, setHeroBanner] = useState<SiteAsset | null>(() => {
+    try {
+      const cached = localStorage.getItem('kmf_cached_hero_banner');
+      return cached ? (JSON.parse(cached) as SiteAsset) : null;
+    } catch {
+      return null;
+    }
+  });
   const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [updateNotification, setUpdateNotification] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState<boolean>(false);
@@ -62,6 +74,36 @@ function MainApp() {
   }, []);
 
   useEffect(() => {
+    // Listen for live updates to homepage hero banner
+    const unsubHero = onSnapshot(
+      doc(db, 'siteAssets', 'heroBanner'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const asset = docSnap.data() as SiteAsset;
+          setHeroBanner(asset);
+          try {
+            localStorage.setItem('kmf_cached_hero_banner', JSON.stringify(asset));
+          } catch {
+            // ignore storage quota errors
+          }
+        } else {
+          setHeroBanner(null);
+          try {
+            localStorage.removeItem('kmf_cached_hero_banner');
+          } catch {
+            // ignore storage errors
+          }
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.READ, 'siteAssets/heroBanner');
+      }
+    );
+
+    return () => unsubHero();
+  }, []);
+
+  useEffect(() => {
     // Listen for published headlines for the scrolling ticker bar
     const q = query(collection(db, 'headlines'), where('isPublished', '==', true));
     const unsubHeadlines = onSnapshot(
@@ -85,7 +127,7 @@ function MainApp() {
   const renderCurrentPage = () => {
     switch (currentPath) {
       case '/':
-        return <HomePage onNavigate={navigate} info={foundationInfo} />;
+        return <HomePage onNavigate={navigate} info={foundationInfo} heroBanner={heroBanner} />;
       case '/donations':
         return <DonationsPage onNavigate={navigate} />;
       case '/members':
@@ -101,9 +143,19 @@ function MainApp() {
       case '/blood-donors':
         return <BloodDonorsPage onNavigate={navigate} />;
       case '/admin':
-        return <AdminPage onNavigate={navigate} info={foundationInfo} />;
+        return (
+          <Suspense
+            fallback={
+              <div className="py-20">
+                <LoadingSpinner text="অ্যাডমিন প্যানেল লোড হচ্ছে..." />
+              </div>
+            }
+          >
+            <AdminPage onNavigate={navigate} info={foundationInfo} heroBanner={heroBanner} />
+          </Suspense>
+        );
       default:
-        return <HomePage onNavigate={navigate} info={foundationInfo} />;
+        return <HomePage onNavigate={navigate} info={foundationInfo} heroBanner={heroBanner} />;
     }
   };
 

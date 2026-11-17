@@ -19,7 +19,6 @@ import {
   Copy,
   Check,
   Building,
-  HeartHandshake,
 } from 'lucide-react';
 import {
   collection,
