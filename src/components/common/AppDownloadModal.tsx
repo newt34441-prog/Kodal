@@ -25,15 +25,30 @@ import {
   subscribeAppUpdate,
 } from '../../utils/pwaAutoUpdate';
 
+const MessengerIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.454 5.504 3.727 7.197V22l3.405-1.869c.909.252 1.872.386 2.868.386 5.523 0 10-4.145 10-9.259C22 6.145 17.523 2 12 2zm.993 12.468l-2.545-2.715-4.967 2.715 5.464-5.798 2.607 2.715 4.905-2.715-5.464 5.798z" />
+  </svg>
+);
+
 interface AppDownloadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'share' | 'install' | 'apk';
+  initialPlatform?: 'whatsapp' | 'messenger';
 }
 
-export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onClose }) => {
+export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({
+  isOpen,
+  onClose,
+  initialTab = 'share',
+  initialPlatform = 'whatsapp',
+}) => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'whatsapp' | 'install' | 'apk'>('whatsapp');
+  const [messengerNotice, setMessengerNotice] = useState(false);
+  const [activeTab, setActiveTab] = useState<'share' | 'install' | 'apk'>(initialTab);
+  const [highlightedPlatform, setHighlightedPlatform] = useState<'whatsapp' | 'messenger'>(initialPlatform);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateCheckMsg, setUpdateCheckMsg] = useState<string | null>(null);
   const [updateState, setUpdateState] = useState<AppUpdateState>(() => getAppUpdateState());
@@ -41,6 +56,14 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
     if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
     return Notification.permission;
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+      setHighlightedPlatform(initialPlatform);
+      setMessengerNotice(false);
+    }
+  }, [isOpen, initialTab, initialPlatform]);
 
   useEffect(() => {
     return subscribeAppUpdate((next) => setUpdateState(next));
@@ -69,21 +92,62 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
   // Real app URL
   const appUrl = window.location.origin;
 
-  // WhatsApp formatted message
-  const whatsappMessage = encodeURIComponent(
-    `আসসালামু আলাইকুম,\nকোদালপুর মানবিক ফাউন্ডেশনের অফিশিয়াল অ্যান্ড্রয়েড অ্যাপ ইনস্টল করুন:\n${appUrl}\n\nসহজেই অনুদান প্রদান, রক্তদাতা সন্ধান ও ফাউন্ডেশনের হিসাব দেখতে অ্যাপটি ফোনে ইনস্টল করে নিন।`
-  );
+  const plainShareMessage = `আসসালামু আলাইকুম,\nকোদালপুর মানবিক ফাউন্ডেশনের অফিশিয়াল অ্যান্ড্রয়েড অ্যাপ ইনস্টল করুন:\n${appUrl}\n\nসহজেই অনুদান প্রদান, রক্তদাতা সন্ধান ও ফাউন্ডেশনের হিসাব দেখতে অ্যাপটি ফোনে ইনস্টল করে নিন।`;
+  const encodedShareMessage = encodeURIComponent(plainShareMessage);
+  const supportsWebShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(
-      `কোদালপুর মানবিক ফাউন্ডেশন অ্যাপ: ${appUrl}`
-    );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyLink = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(plainShareMessage);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // ignore clipboard errors
+    }
   };
 
-  const handleOpenWhatsApp = () => {
-    window.open(`https://api.whatsapp.com/send?text=${whatsappMessage}`, '_blank');
+  const handleShareMessenger = async () => {
+    setHighlightedPlatform('messenger');
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(plainShareMessage);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
+    } catch {
+      // ignore clipboard errors
+    }
+
+    setMessengerNotice(true);
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const anchor = document.createElement('a');
+    if (isMobile) {
+      anchor.href = `fb-messenger://share/?link=${encodeURIComponent(appUrl)}`;
+      anchor.rel = 'noopener noreferrer';
+    } else {
+      anchor.href = 'https://www.messenger.com/';
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+    }
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  };
+
+  const handleNativeShare = async () => {
+    if (!supportsWebShare) return;
+    try {
+      await navigator.share({
+        title: 'কোদালপুর মানবিক ফাউন্ডেশন',
+        text: plainShareMessage,
+        url: appUrl,
+      });
+    } catch {
+      // user cancelled native share
+    }
   };
 
   return (
@@ -115,15 +179,15 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
         {/* Tab Navigation */}
         <div className="flex border-b border-slate-200 bg-slate-50 text-xs sm:text-sm font-semibold">
           <button
-            onClick={() => setActiveTab('whatsapp')}
+            onClick={() => setActiveTab('share')}
             className={`flex-1 py-3 px-2 text-center transition-colors border-b-2 cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === 'whatsapp'
+              activeTab === 'share'
                 ? 'border-[#078747] text-[#078747] bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span>হোয়াটসঅ্যাপে পাঠান</span>
+            <span>অ্যাপ শেয়ার করুন</span>
           </button>
 
           <button
@@ -152,61 +216,143 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Tab Contents */}
-        <div className="p-5 sm:p-6 space-y-5">
-          {/* TAB 1: WhatsApp Sharing */}
-          {activeTab === 'whatsapp' && (
+        <div className="p-5 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+          {/* TAB 1: WhatsApp & Messenger Sharing */}
+          {activeTab === 'share' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-100 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#078747] text-white flex items-center justify-center shrink-0 mt-0.5">
-                  <Share2 className="w-4 h-4" />
+              <div
+                className={`p-4 rounded-2xl border flex items-start gap-3 ${
+                  highlightedPlatform === 'messenger'
+                    ? 'bg-blue-50/80 border-blue-200'
+                    : 'bg-emerald-50/80 border-emerald-100'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 ${
+                    highlightedPlatform === 'messenger' ? 'bg-[#0084FF]' : 'bg-[#078747]'
+                  }`}
+                >
+                  {highlightedPlatform === 'messenger' ? (
+                    <MessengerIcon className="w-4 h-4" />
+                  ) : (
+                    <Share2 className="w-4 h-4" />
+                  )}
                 </div>
                 <div className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                  <p className="font-semibold text-[#078747] mb-1">
-                    হোয়াটসঅ্যাপে ১-ক্লিকে অ্যাপ পাঠান
+                  <p
+                    className={`font-semibold mb-1 ${
+                      highlightedPlatform === 'messenger' ? 'text-[#0084FF]' : 'text-[#078747]'
+                    }`}
+                  >
+                    হোয়াটসঅ্যাপ ও মেসেন্জারে ১-ক্লিকে অ্যাপ পাঠান
                   </p>
-                  যাঁদের হোয়াটসঅ্যাপে পাঠাবেন, তাঁরা লিংকে ক্লিক করলেই কোনো প্লে-স্টোর ছাড়াই সরাসরি তাঁদের ফোনে অ্যাপটি ইনস্টল করে নিতে পারবেন।
+                  যাঁদের কাছে পাঠাবেন, তাঁরা লিংকে ক্লিক করলেই কোনো প্লে-স্টোর ছাড়াই সরাসরি তাঁদের ফোনে অ্যাপটি ইনস্টল করে নিতে পারবেন।
                 </div>
               </div>
 
               {/* Message Preview Box */}
               <div className="border border-slate-200 rounded-2xl p-3.5 bg-slate-50 text-xs text-slate-600 font-mono leading-relaxed relative">
                 <p className="font-sans font-semibold text-slate-800 mb-1">
-                  হোয়াটসঅ্যাপ মেসেজ প্রিভিউ:
+                  শেয়ার মেসেজ প্রিভিউ:
                 </p>
                 <div className="text-slate-700 font-sans whitespace-pre-line text-xs">
                   আসসালামু আলাইকুম,{'\n'}
                   কোদালপুর মানবিক ফাউন্ডেশনের অফিশিয়াল অ্যান্ড্রয়েড অ্যাপ ইনস্টল করুন:{'\n'}
-                  <span className="text-blue-600 underline font-semibold">{appUrl}</span>{'\n'}
+                  <span className="text-blue-600 underline font-semibold break-all">{appUrl}</span>{'\n'}
                   সহজেই অনুদান প্রদান, রক্তদাতা সন্ধান ও ফাউন্ডেশনের হিসাব দেখতে অ্যাপটি ফোনে ইনস্টল করে নিন।
                 </div>
               </div>
 
-              {/* Primary Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2.5">
+              {/* Primary Share Buttons: Messenger & WhatsApp */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <button
-                  onClick={handleOpenWhatsApp}
-                  className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all duration-200 cursor-pointer active:scale-98"
+                  type="button"
+                  onClick={handleShareMessenger}
+                  className={`inline-flex items-center justify-center gap-2 bg-[#0084FF] hover:bg-[#006FE0] text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all duration-200 cursor-pointer active:scale-98 text-xs sm:text-sm ${
+                    highlightedPlatform === 'messenger' ? 'ring-2 ring-[#0084FF]/40 ring-offset-2' : ''
+                  }`}
+                >
+                  <MessengerIcon className="w-4 h-4" />
+                  <span>মেসেন্জারে শেয়ার করুন</span>
+                </button>
+
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodedShareMessage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setHighlightedPlatform('whatsapp')}
+                  className={`inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all duration-200 cursor-pointer active:scale-98 text-xs sm:text-sm ${
+                    highlightedPlatform === 'whatsapp' ? 'ring-2 ring-[#25D366]/40 ring-offset-2' : ''
+                  }`}
                 >
                   <Share2 className="w-4 h-4" />
                   <span>হোয়াটসঅ্যাপে শেয়ার করুন</span>
-                </button>
+                </a>
+              </div>
 
+              {/* Messenger helper notice with fallback links */}
+              {messengerNotice && (
+                <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-950 space-y-1.5 animate-in fade-in duration-200">
+                  <p className="font-bold text-[#0084FF]">
+                    মেসেজ ও অ্যাপের লিংক কপি করা হয়েছে!
+                  </p>
+                  <p className="text-slate-700 leading-relaxed">
+                    মোবাইলে মেসেন্জার অ্যাপ সরাসরি ওপেন না হলে বা কম্পিউটার থেকে শেয়ার করতে চাইলে নিচের অপশন থেকে মেসেন্জার ওয়েব খুলে চ্যাটে পেস্ট (Paste) করে পাঠান।
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 pt-0.5">
+                    <a
+                      href="https://www.messenger.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-bold text-[#0084FF] hover:underline"
+                    >
+                      <span>মেসেন্জার ওয়েব খুলুন</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    {supportsWebShare && (
+                      <button
+                        type="button"
+                        onClick={handleNativeShare}
+                        className="inline-flex items-center gap-1 font-bold text-[#0B376B] hover:underline cursor-pointer"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>অন্যান্য অ্যাপে শেয়ার করুন</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Secondary Utility Row: Copy & Native Share */}
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
+                  type="button"
                   onClick={handleCopyLink}
-                  className="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-xl transition-all duration-200 cursor-pointer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 cursor-pointer text-xs sm:text-sm"
                 >
                   {copied ? (
                     <>
                       <Check className="w-4 h-4 text-emerald-600" />
-                      <span className="text-emerald-700">কপি হয়েছে!</span>
+                      <span className="text-emerald-700">মেসেজ ও লিংক কপি হয়েছে!</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4" />
-                      <span>লিংক কপি</span>
+                      <span>মেসেজ ও লিংক কপি করুন</span>
                     </>
                   )}
                 </button>
+
+                {supportsWebShare && (
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    className="inline-flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-[#0B376B] border border-blue-200 font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 cursor-pointer text-xs sm:text-sm"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>আরও অ্যাপে পাঠান</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -352,7 +498,7 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
             <div className="space-y-4 text-xs sm:text-sm text-slate-700">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
                 <h4 className="font-bold text-[#0B376B] text-sm">
-                  হোয়াটসঅ্যাপে সরাসরি .APK ফাইল পাঠাতে চাইলে:
+                  হোয়াটসঅ্যাপ বা মেসেন্জারে সরাসরি .APK ফাইল পাঠাতে চাইলে:
                 </h4>
                 <p className="text-slate-600 leading-relaxed">
                   গুগল ও মাইক্রোসফটের অফিশিয়াল <strong>PWABuilder</strong> টুল দিয়ে আপনার এই ওয়েবসাইটের লিংক থেকে সরাসরি ইনস্টলেবল <strong>.apk ফাইল</strong> বিনামূল্যে বানিয়ে নেওয়া যায়।
@@ -371,7 +517,7 @@ export const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onCl
               </div>
 
               <div className="text-xs text-slate-500 leading-relaxed border-l-2 border-emerald-500 pl-3">
-                <strong>পরামর্শ:</strong> হোয়াটসঅ্যাপে সরাসরি লিংক পাঠানোই সবচেয়ে সুবিধাজনক ও নিরাপদ। যেকোনো ইউজার লিংকে ক্লিক করে ১ সেকেন্ডেই অ্যাপ ইনস্টল করতে পারেন কোনো অজানা সোর্স বা সিকিউরিটি ওয়ার্নিং ছাড়াই।
+                <strong>পরামর্শ:</strong> হোয়াটসঅ্যাপ বা মেসেন্জারে সরাসরি লিংক পাঠানোই সবচেয়ে সুবিধাজনক ও নিরাপদ। যেকোনো ইউজার লিংকে ক্লিক করে ১ সেকেন্ডেই অ্যাপ ইনস্টল করতে পারেন কোনো অজানা সোর্স বা সিকিউরিটি ওয়ার্নিং ছাড়াই।
               </div>
             </div>
           )}

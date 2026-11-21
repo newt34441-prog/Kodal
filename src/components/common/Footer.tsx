@@ -47,7 +47,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, info }) => {
                   className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-white transition-colors cursor-pointer py-1 px-2.5 rounded-md hover:bg-white/10"
                 >
                   <Smartphone className="w-3.5 h-3.5" />
-                  <span className="font-semibold">মোবাইল অ্যাপ / WhatsApp</span>
+                  <span className="font-semibold">মোবাইল অ্যাপ / শেয়ার</span>
                 </button>
 
                 <button

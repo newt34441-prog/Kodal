@@ -25,6 +25,14 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info, heroBanner }) => {
   const [showAppModal, setShowAppModal] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState<'share' | 'install' | 'apk'>('share');
+  const [modalInitialPlatform, setModalInitialPlatform] = useState<'whatsapp' | 'messenger'>('whatsapp');
+
+  const openAppModal = (tab: 'share' | 'install' | 'apk', platform: 'whatsapp' | 'messenger' = 'whatsapp') => {
+    setModalInitialTab(tab);
+    setModalInitialPlatform(platform);
+    setShowAppModal(true);
+  };
 
   const rawHeroUrl = heroBanner?.imageUrl?.trim();
   const heroBannerSrc = rawHeroUrl
@@ -156,17 +164,26 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info, heroBanner
                   'কোদালপুর মানবিক ফাউন্ডেশন একটি স্বেচ্ছাসেবী সামাজিক সংগঠন, যা মানবতার সেবায়, অসহায় মানুষের পাশে দাঁড়ানো এবং সমাজের সামগ্রিক কল্যাণে কাজ করে।'}
               </p>
 
-              {/* WhatsApp Share & App Download Action */}
+              {/* WhatsApp, Messenger Share & App Download Action */}
               <div className="pt-1 flex flex-wrap gap-2.5">
                 <button
-                  onClick={() => setShowAppModal(true)}
+                  onClick={() => openAppModal('share', 'whatsapp')}
                   className="inline-flex items-center gap-2 bg-[#078747] hover:bg-[#056032] text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>হোয়াটসঅ্যাপে অ্যাপ পাঠান</span>
                 </button>
                 <button
-                  onClick={() => setShowAppModal(true)}
+                  onClick={() => openAppModal('share', 'messenger')}
+                  className="inline-flex items-center gap-2 bg-[#0084FF] hover:bg-[#006FE0] text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0" aria-hidden="true">
+                    <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.454 5.504 3.727 7.197V22l3.405-1.869c.909.252 1.872.386 2.868.386 5.523 0 10-4.145 10-9.259C22 6.145 17.523 2 12 2zm.993 12.468l-2.545-2.715-4.967 2.715 5.464-5.798 2.607 2.715 4.905-2.715-5.464 5.798z" />
+                  </svg>
+                  <span>মেসেন্জারে শেয়ার করুন</span>
+                </button>
+                <button
+                  onClick={() => openAppModal('install')}
                   className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-[#0B376B] border border-slate-200/90 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
                 >
                   <Smartphone className="w-3.5 h-3.5 text-[#078747]" />
@@ -370,10 +387,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, info, heroBanner
         </div>
       </section>
 
-      {/* App Download & WhatsApp Sharing Modal */}
+      {/* App Download & WhatsApp / Messenger Sharing Modal */}
       <AppDownloadModal
         isOpen={showAppModal}
         onClose={() => setShowAppModal(false)}
+        initialTab={modalInitialTab}
+        initialPlatform={modalInitialPlatform}
       />
     </div>
   );
